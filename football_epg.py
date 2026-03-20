@@ -202,28 +202,33 @@ with _col_logo:
     st.markdown('<div class="site-title" style="padding:14px 0 10px">Sporter</div>',
                 unsafe_allow_html=True)
 with _col_right:
-    st.markdown('<div style="padding-top:10px;display:flex;gap:8px;align-items:center;justify-content:flex-end">',
-                unsafe_allow_html=True)
-    btn_cols = st.columns([2, 2]) if _auth_available() else st.columns([1])
-    with btn_cols[0]:
-        open_cfg = st.button("Настройки", key="open_cfg", use_container_width=True)
-    if _auth_available() and len(btn_cols) > 1:
-        with btn_cols[1]:
-            if USER_AVATAR:
-                st.markdown(
-                    f'<div style="display:flex;align-items:center;gap:6px;padding-top:4px">'
-                    f'<img src="{USER_AVATAR}" style="width:28px;height:28px;border-radius:50%;'
-                    f'border:2px solid rgba(79,163,255,0.4)">'
-                    f'<span style="font-size:.78em;color:#6b8ab0;white-space:nowrap;overflow:hidden;'
-                    f'text-overflow:ellipsis;max-width:100px">{USER_NAME}</span></div>',
-                    unsafe_allow_html=True,
-                )
-            if st.button("Выйти", key="logout_btn", use_container_width=True):
-                for k in ["user_email","user_name","user_avatar",
-                          "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
-                    st.session_state.pop(k, None)
-                st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Компактне меню: аватар + ім'я → popover з настройками і виходом
+    avatar_html = (
+        f'<img src="{USER_AVATAR}" style="width:28px;height:28px;border-radius:50%;'
+        f'border:2px solid rgba(79,163,255,0.4);flex-shrink:0">'
+        if USER_AVATAR else
+        '<span style="font-size:1.3em;line-height:1">👤</span>'
+    )
+    short_name = USER_NAME.split()[0] if USER_NAME and USER_NAME != "Local" else USER_NAME
+    st.markdown(
+        f'<div style="display:flex;align-items:center;justify-content:flex-end;'
+        f'padding-top:14px;gap:8px">'
+        f'{avatar_html}'
+        f'<span style="font-size:.8em;color:#6b8ab0;white-space:nowrap;overflow:hidden;'
+        f'text-overflow:ellipsis;max-width:110px;font-weight:500">{short_name}</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+    c1, c2 = st.columns(2)
+    with c1:
+        open_cfg = st.button("⚙ Настройки", key="open_cfg", use_container_width=True)
+    with c2:
+        if st.button("Выйти →", key="logout_btn", use_container_width=True):
+            for k in ["user_email","user_name","user_avatar",
+                      "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
+                st.session_state.pop(k, None)
+            st.rerun()
+
     if open_cfg:
         settings_modal(
             all_known_leagues=all_known_leagues,

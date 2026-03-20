@@ -56,16 +56,22 @@ def render_login_page():
     .login-divider{width:100%;display:flex;align-items:center;gap:12px;
         color:#2a3a5a;font-size:.8em;font-weight:500;}
     .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:rgba(79,163,255,0.1);}
-    .stButton > button{width:100%!important;background:#fff!important;color:#3c4043!important;
-        border:1px solid #dadce0!important;border-radius:24px!important;padding:12px 24px!important;
+    .stButton > button{
+        width:100%!important;
+        background:#fff!important;color:#3c4043!important;
+        border:1px solid #dadce0!important;border-radius:24px!important;
+        padding:12px 24px!important;
         font-family:'Inter',sans-serif!important;font-size:.95em!important;font-weight:600!important;
         display:flex!important;align-items:center!important;justify-content:center!important;
-        gap:12px!important;cursor:pointer!important;transition:background .15s,box-shadow .15s!important;
-        box-shadow:0 1px 3px rgba(0,0,0,0.12)!important;letter-spacing:.2px!important;height:48px!important;}
+        gap:12px!important;cursor:pointer!important;
+        transition:background .15s,box-shadow .15s!important;
+        box-shadow:0 1px 3px rgba(0,0,0,0.12)!important;
+        letter-spacing:.2px!important;height:48px!important;
+    }
     .stButton > button:hover{background:#f8f9fa!important;box-shadow:0 2px 8px rgba(0,0,0,0.18)!important;
         border-color:#c6c9cc!important;}
     .stButton > button:active{background:#f1f3f4!important;box-shadow:none!important;}
-    .login-footer{margin-top:32px;color:#2a3a5a;font-size:.78em;text-align:center;
+    .login-footer{margin-top:4px;color:#2a3a5a;font-size:.78em;text-align:center;
         line-height:1.6;animation:fadeUp 1s .4s ease both;}
     </style>
     <div class="login-page">
@@ -85,18 +91,6 @@ def render_login_page():
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("""
-        <div style="display:flex;align-items:center;justify-content:center;margin-bottom:-8px">
-        <svg width="20" height="20" viewBox="0 0 48 48" style="position:absolute;z-index:10;margin-left:-120px;pointer-events:none">
-          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          <path fill="none" d="M0 0h48v48H0z"/>
-        </svg>
-        </div>
-        """, unsafe_allow_html=True)
-
         from streamlit_oauth import OAuth2Component
         oauth2 = OAuth2Component(
             client_id=st.secrets["GOOGLE_CLIENT_ID"],
@@ -105,7 +99,7 @@ def render_login_page():
             token_endpoint="https://oauth2.googleapis.com/token",
         )
         result = oauth2.authorize_button(
-            name="  Войти через Google",
+            name="Войти через Google",
             redirect_uri=st.secrets["REDIRECT_URI"],
             scope="openid email profile",
             key="google_login",
