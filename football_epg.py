@@ -197,47 +197,98 @@ if to_cache:
     lc_bar.empty()
 
 # ─── HEADER ──────────────────────────────────────────────────────────────────
-_col_logo, _col_mid, _col_right = st.columns([3, 5, 2])
+_col_logo, _col_mid, _col_right = st.columns([3, 5, 1])
 with _col_logo:
     st.markdown('<div class="site-title" style="padding:14px 0 10px">Sporter</div>',
                 unsafe_allow_html=True)
 with _col_right:
-    # Компактне меню: аватар + ім'я → popover з настройками і виходом
-    avatar_html = (
-        f'<img src="{USER_AVATAR}" style="width:28px;height:28px;border-radius:50%;'
-        f'border:2px solid rgba(79,163,255,0.4);flex-shrink:0">'
-        if USER_AVATAR else
-        '<span style="font-size:1.3em;line-height:1">👤</span>'
-    )
-    short_name = USER_NAME.split()[0] if USER_NAME and USER_NAME != "Local" else USER_NAME
-    st.markdown(
-        f'<div style="display:flex;align-items:center;justify-content:flex-end;'
-        f'padding-top:14px;gap:8px">'
-        f'{avatar_html}'
-        f'<span style="font-size:.8em;color:#6b8ab0;white-space:nowrap;overflow:hidden;'
-        f'text-overflow:ellipsis;max-width:110px;font-weight:500">{short_name}</span>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-    c1, c2 = st.columns(2)
-    with c1:
-        open_cfg = st.button("⚙ Настройки", key="open_cfg", use_container_width=True)
-    with c2:
-        if st.button("Выйти →", key="logout_btn", use_container_width=True):
+    # Аватар-кнопка → popover з меню (не конфліктує з st.dialog)
+    avatar_label = f'<img src="{USER_AVATAR}">' if USER_AVATAR else "👤"
+    st.markdown("""
+    <style>
+    /* Кнопка-аватар у хедері */
+    div[data-testid="stPopover"] > div > button {
+        background: transparent !important;
+        border: 2px solid rgba(79,163,255,0.35) !important;
+        border-radius: 50% !important;
+        width: 42px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        margin-top: 10px !important;
+        box-shadow: 0 2px 12px rgba(0,60,180,0.25) !important;
+        transition: border-color .2s, box-shadow .2s !important;
+    }
+    div[data-testid="stPopover"] > div > button:hover {
+        border-color: rgba(79,163,255,0.7) !important;
+        box-shadow: 0 2px 18px rgba(79,163,255,0.3) !important;
+    }
+    div[data-testid="stPopover"] > div > button img {
+        width: 38px !important; height: 38px !important;
+        border-radius: 50% !important; object-fit: cover !important;
+        display: block !important;
+    }
+    div[data-testid="stPopover"] > div > button p {
+        font-size: 1.4em !important; line-height: 1 !important; margin: 0 !important;
+    }
+    /* Меню всередині popover */
+    div[data-testid="stPopoverBody"] {
+        padding: 8px 6px !important;
+        min-width: 180px !important;
+    }
+    div[data-testid="stPopoverBody"] .stButton > button {
+        background: transparent !important;
+        border: none !important;
+        border-radius: 10px !important;
+        color: #dde6f5 !important;
+        font-size: .88em !important;
+        font-weight: 600 !important;
+        height: 40px !important;
+        width: 100% !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding: 0 12px !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stPopoverBody"] .stButton > button:hover {
+        background: rgba(79,163,255,0.1) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    with st.popover(avatar_label, use_container_width=False):
+        # Мікро-профіль всередині popover
+        if USER_AVATAR:
+            st.markdown(
+                f'<div style="display:flex;align-items:center;gap:10px;'
+                f'padding:4px 8px 10px;border-bottom:1px solid rgba(79,163,255,0.12);margin-bottom:6px">'
+                f'<img src="{USER_AVATAR}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0">'
+                f'<div><div style="font-size:.82em;font-weight:600;color:#dde6f5;white-space:nowrap">{USER_NAME}</div>'
+                f'<div style="font-size:.72em;color:#4a6080;white-space:nowrap">{USER_EMAIL}</div></div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+        if st.button("⚙  Настройки", key="open_cfg", use_container_width=True):
+            st.session_state["_open_settings"] = True
+            st.rerun()
+        st.markdown('<hr style="border:none;border-top:1px solid rgba(79,163,255,0.1);margin:4px 0">', unsafe_allow_html=True)
+        if st.button("→  Выйти", key="logout_btn", use_container_width=True):
             for k in ["user_email","user_name","user_avatar",
                       "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
                 st.session_state.pop(k, None)
             st.rerun()
 
-    if open_cfg:
-        settings_modal(
-            all_known_leagues=all_known_leagues,
-            matches=matches,
-            user_email=USER_EMAIL,
-            TZ=TZ, SHOW_SCORE=SHOW_SCORE, DARK=DARK,
-            SHOW_INTERESTING=SHOW_INTERESTING, BOOST_UKRAINE=BOOST_UKRAINE,
-            ACTIVE_LGS=ACTIVE_LGS,
-        )
+# Відкриваємо settings_modal після rerun (поза popover, щоб не конфліктували)
+if st.session_state.pop("_open_settings", False):
+    settings_modal(
+        all_known_leagues=all_known_leagues,
+        matches=matches,
+        user_email=USER_EMAIL,
+        TZ=TZ, SHOW_SCORE=SHOW_SCORE, DARK=DARK,
+        SHOW_INTERESTING=SHOW_INTERESTING, BOOST_UKRAINE=BOOST_UKRAINE,
+        ACTIVE_LGS=ACTIVE_LGS,
+    )
 
 # ─── ДАТИ → ТАБКІ → МАТЧІ ────────────────────────────────────────────────────
 today    = now.date()

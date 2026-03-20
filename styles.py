@@ -198,27 +198,6 @@ html,body,[class*="css"]{{font-family:'Inter',sans-serif}}
 div[data-testid="stTabs"] button{{font-size:.75em!important;font-weight:600!important;color:{CLRS}!important}}
 div[data-testid="stTabs"] button[aria-selected="true"]{{color:#4fa3ff!important}}
 
-/* ── кнопки хедера ── */
-div[data-testid="column"] .stButton > button{{
-  background:rgba(79,163,255,0.08)!important;
-  color:{CLRS}!important;
-  border:1px solid rgba(79,163,255,0.18)!important;
-  border-radius:20px!important;
-  padding:5px 14px!important;
-  font-size:.8em!important;
-  font-weight:600!important;
-  height:34px!important;
-  width:auto!important;
-  white-space:nowrap!important;
-  letter-spacing:.2px!important;
-  box-shadow:none!important;
-}}
-div[data-testid="column"] .stButton > button:hover{{
-  background:rgba(79,163,255,0.16)!important;
-  border-color:rgba(79,163,255,0.35)!important;
-  color:{CLR}!important;
-}}
-
 section[data-testid="stSidebar"],
 [data-testid="collapsedControl"]{{display:none!important}}
 

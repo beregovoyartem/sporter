@@ -28,90 +28,111 @@ def render_login_page():
             linear-gradient(175deg, #060e22 0%, #060b18 45%, #04100d 100%);
         min-height:100vh;
     }
-    .block-container{padding-top:0!important;max-width:1500px!important;
-        display:flex;align-items:center;justify-content:center;min-height:100vh;}
+    .block-container{
+        padding-top:0!important;
+        max-width:480px!important;
+        padding-left:20px!important;
+        padding-right:20px!important;
+    }
     @keyframes ts{0%{background-position:0%}100%{background-position:300%}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-    .login-page{display:flex;flex-direction:column;align-items:center;
-        justify-content:center;min-height:100vh;gap:0;padding:40px 20px;}
-    .login-ball{font-size:3.2em;animation:spin 8s linear infinite;margin-bottom:8px;
-        filter:drop-shadow(0 0 24px rgba(255,210,52,0.4));}
-    .login-title{font-family:'Pacifico',cursive;font-size:clamp(3em,8vw,5.5em);
-        font-weight:400;line-height:1.1;margin:0 0 16px;
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+    .lp-wrap{
+        display:flex;flex-direction:column;align-items:center;
+        justify-content:center;min-height:100vh;
+        padding:40px 0 60px;gap:0;
+    }
+    .lp-title{
+        font-family:'Pacifico',cursive;
+        font-size:4.2em;
+        font-weight:400;
+        line-height:1.25;
+        padding:8px 4px 4px;
+        margin:0 0 10px;
         background:linear-gradient(110deg,#a0650a 0%,#ffd234 25%,#ffe680 50%,#c8860a 75%,#ffd234 100%);
-        background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
-        animation:ts 3.5s linear infinite, fadeUp .6s ease both;}
-    .login-sub{color:#6b8ab0;font-size:1.05em;font-weight:500;margin:0 0 48px;
-        letter-spacing:.3px;animation:fadeUp .7s .1s ease both;}
-    .login-card{background:rgba(10,20,50,0.72);border:1px solid rgba(79,163,255,0.16);
-        border-radius:24px;padding:40px 44px 36px;width:100%;max-width:420px;
-        display:flex;flex-direction:column;align-items:center;gap:20px;
-        box-shadow:0 8px 60px rgba(0,20,80,0.5);position:relative;overflow:hidden;
-        animation:fadeUp .8s .2s ease both;}
-    .login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-        background:linear-gradient(90deg,#1a6fff,#00c6ff,#ffd234);opacity:.8;}
-    .login-card-title{font-size:1.15em;font-weight:700;color:#dde6f5;letter-spacing:.2px;margin:0;}
-    .login-card-sub{font-size:.85em;color:#4a6080;margin:0;text-align:center;line-height:1.5;}
-    .login-divider{width:100%;display:flex;align-items:center;gap:12px;
-        color:#2a3a5a;font-size:.8em;font-weight:500;}
-    .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:rgba(79,163,255,0.1);}
+        background-size:300% auto;
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+        animation:ts 3.5s linear infinite, fadeUp .5s ease both;
+    }
+    .lp-sub{
+        color:#6b8ab0;font-size:.95em;font-weight:500;
+        margin:0 0 32px;letter-spacing:.3px;
+        animation:fadeUp .6s .1s ease both;
+        text-align:center;
+    }
+    .lp-card{
+        background:rgba(10,20,50,0.75);
+        border:1px solid rgba(79,163,255,0.18);
+        border-radius:20px;
+        padding:32px 36px 28px;
+        width:100%;
+        display:flex;flex-direction:column;align-items:center;gap:16px;
+        box-shadow:0 8px 48px rgba(0,20,80,0.5);
+        position:relative;overflow:hidden;
+        animation:fadeUp .7s .15s ease both;
+    }
+    .lp-card::before{
+        content:'';position:absolute;top:0;left:0;right:0;height:2px;
+        background:linear-gradient(90deg,#1a6fff,#00c6ff,#ffd234);opacity:.85;
+    }
+    .lp-card-title{font-size:1.1em;font-weight:700;color:#dde6f5;margin:0;}
+    .lp-card-sub{font-size:.82em;color:#4a6080;margin:0;text-align:center;line-height:1.55;}
+    .lp-divider{
+        width:100%;display:flex;align-items:center;gap:10px;
+        color:#2a3a5a;font-size:.78em;font-weight:500;
+    }
+    .lp-divider::before,.lp-divider::after{content:'';flex:1;height:1px;background:rgba(79,163,255,0.12);}
+    .lp-footer{
+        margin-top:20px;color:#2a3a5a;font-size:.75em;text-align:center;
+        line-height:1.6;animation:fadeUp .9s .3s ease both;
+    }
+    /* кнопка OAuth — тільки на login-сторінці */
     .stButton > button{
         width:100%!important;
-        background:#fff!important;color:#3c4043!important;
-        border:1px solid #dadce0!important;border-radius:24px!important;
-        padding:12px 24px!important;
-        font-family:'Inter',sans-serif!important;font-size:.95em!important;font-weight:600!important;
-        display:flex!important;align-items:center!important;justify-content:center!important;
-        gap:12px!important;cursor:pointer!important;
-        transition:background .15s,box-shadow .15s!important;
+        background:#ffffff!important;color:#3c4043!important;
+        border:1px solid #dadce0!important;border-radius:22px!important;
+        padding:10px 20px!important;
+        font-family:'Inter',sans-serif!important;font-size:.93em!important;font-weight:600!important;
+        height:46px!important;
         box-shadow:0 1px 3px rgba(0,0,0,0.12)!important;
-        letter-spacing:.2px!important;height:48px!important;
+        transition:box-shadow .15s,background .15s!important;
     }
-    .stButton > button:hover{background:#f8f9fa!important;box-shadow:0 2px 8px rgba(0,0,0,0.18)!important;
-        border-color:#c6c9cc!important;}
-    .stButton > button:active{background:#f1f3f4!important;box-shadow:none!important;}
-    .login-footer{margin-top:4px;color:#2a3a5a;font-size:.78em;text-align:center;
-        line-height:1.6;animation:fadeUp 1s .4s ease both;}
+    .stButton > button:hover{
+        background:#f8f9fa!important;
+        box-shadow:0 2px 8px rgba(0,0,0,0.16)!important;
+    }
     </style>
-    <div class="login-page">
-        <div class="login-ball">⚽</div>
-        <div class="login-title">Sporter</div>
-        <div class="login-sub">Футбольный EPG — прямые трансляции и расписание матчей</div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="lp-wrap">', unsafe_allow_html=True)
+    st.markdown('<div class="lp-title">Sporter</div>', unsafe_allow_html=True)
+    st.markdown('<div class="lp-sub">Умное расписание футбольных матчей</div>', unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="lp-card">
+        <div class="lp-card-title">Добро пожаловать</div>
+        <div class="lp-card-sub">Войдите чтобы сохранять настройки<br>и выбранные лиги между сессиями</div>
+        <div class="lp-divider">войти через</div>
     </div>
     """, unsafe_allow_html=True)
 
-    _, card_col, _ = st.columns([1, 1.2, 1])
-    with card_col:
-        st.markdown("""
-        <div class="login-card">
-            <div class="login-card-title">Добро пожаловать</div>
-            <div class="login-card-sub">Войдите чтобы сохранять настройки<br>и выбранные лиги между сессиями</div>
-            <div class="login-divider">войти через</div>
-        </div>
-        """, unsafe_allow_html=True)
+    from streamlit_oauth import OAuth2Component
+    oauth2 = OAuth2Component(
+        client_id=st.secrets["GOOGLE_CLIENT_ID"],
+        client_secret=st.secrets["GOOGLE_CLIENT_SECRET"],
+        authorize_endpoint="https://accounts.google.com/o/oauth2/auth",
+        token_endpoint="https://oauth2.googleapis.com/token",
+    )
+    result = oauth2.authorize_button(
+        name="Войти через Google",
+        redirect_uri=st.secrets["REDIRECT_URI"],
+        scope="openid email profile",
+        key="google_login",
+        use_container_width=True,
+    )
 
-        from streamlit_oauth import OAuth2Component
-        oauth2 = OAuth2Component(
-            client_id=st.secrets["GOOGLE_CLIENT_ID"],
-            client_secret=st.secrets["GOOGLE_CLIENT_SECRET"],
-            authorize_endpoint="https://accounts.google.com/o/oauth2/auth",
-            token_endpoint="https://oauth2.googleapis.com/token",
-        )
-        result = oauth2.authorize_button(
-            name="Войти через Google",
-            redirect_uri=st.secrets["REDIRECT_URI"],
-            scope="openid email profile",
-            key="google_login",
-            use_container_width=True,
-        )
-
-        st.markdown("""
-        <div class="login-footer">
-            🔒 Мы используем только ваш email<br>
-            для сохранения настроек. Никаких лишних данных.
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown('<div class="lp-footer">🔒 Мы используем только ваш email для сохранения настроек</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if result and "token" in result:
         import jwt as pyjwt
