@@ -15,9 +15,155 @@ st.set_page_config(page_title="Sporter", layout="wide", initial_sidebar_state="a
 BASE      = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(BASE, "epg_cache")
 LOGOS_DIR = os.path.join(CACHE_DIR, "logos")
-CFG_FILE     = os.path.join(BASE, "epg_settings.json")
-LEAGUES_FILE = os.path.join(BASE, "epg_leagues.json")  # накопительный, не сбрасывается
 for d in (CACHE_DIR, LOGOS_DIR): os.makedirs(d, exist_ok=True)
+
+# ─── GOOGLE AUTH ─────────────────────────────────────────────────────────────
+def _auth_available() -> bool:
+    """Перевіряємо чи є секрети для Google OAuth."""
+    try:
+        return bool(st.secrets.get("GOOGLE_CLIENT_ID"))
+    except Exception:
+        return False
+
+def render_login_page():
+    """Сторінка входу — показуємо тільки кнопку Google."""
+    st.markdown("""
+        <style>
+        .login-wrap{display:flex;flex-direction:column;align-items:center;
+                    justify-content:center;min-height:70vh;gap:24px}
+        .login-title{font-size:2.4em;font-weight:800;
+                     background:linear-gradient(110deg,#a0650a,#ffd234,#c8860a);
+                     -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .login-sub{color:#6b8ab0;font-size:1em}
+        </style>
+        <div class="login-wrap">
+          <div class="login-title">⚽ Sporter</div>
+          <div class="login-sub">Футбольный EPG — войдите чтобы продолжить</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Центруємо кнопку
+    _, col, _ = st.columns([2, 1, 2])
+    with col:
+        from streamlit_oauth import OAuth2Component
+        oauth2 = OAuth2Component(
+            client_id=st.secrets["GOOGLE_CLIENT_ID"],
+            client_secret=st.secrets["GOOGLE_CLIENT_SECRET"],
+            authorize_endpoint="https://accounts.google.com/o/oauth2/auth",
+            token_endpoint="https://oauth2.googleapis.com/token",
+        )
+        result = oauth2.authorize_button(
+            name="Войти через Google",
+            redirect_uri=st.secrets["REDIRECT_URI"],
+            scope="openid email profile",
+            key="google_login",
+            use_container_width=True,
+        )
+
+    if result and "token" in result:
+        import jwt as pyjwt
+        try:
+            info = pyjwt.decode(
+                result["token"]["id_token"],
+                options={"verify_signature": False}
+            )
+            st.session_state["user_email"]  = info.get("email", "")
+            st.session_state["user_name"]   = info.get("name", info.get("email", ""))
+            st.session_state["user_avatar"] = info.get("picture", "")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Ошибка авторизации: {e}")
+
+def get_current_user() -> dict | None:
+    """Повертає dict з email/name/avatar або None якщо не залогінений."""
+    if not _auth_available():
+        # Локальний режим — не потрібна авторизація
+        return {"email": "local", "name": "Local", "avatar": ""}
+    email = st.session_state.get("user_email")
+    if not email:
+        return None
+    return {
+        "email": email,
+        "name":  st.session_state.get("user_name", email),
+        "avatar": st.session_state.get("user_avatar", ""),
+    }
+
+# ── Перевірка авторизації — якщо не залогінений, зупиняємо рендер ────────────
+_user = get_current_user()
+if _user is None:
+    render_login_page()
+    st.stop()
+
+USER_EMAIL = _user["email"]
+USER_NAME  = _user["name"]
+USER_AVATAR = _user["avatar"]
+
+# ─── SUPABASE ─────────────────────────────────────────────────────────────────
+def _supabase_available() -> bool:
+    try:
+        return bool(st.secrets.get("SUPABASE_URL") and st.secrets.get("SUPABASE_KEY"))
+    except Exception:
+        return False
+
+def _sb_load_cfg(email: str) -> dict | None:
+    """Завантажує налаштування юзера з Supabase."""
+    if not _supabase_available(): return None
+    try:
+        from supabase import create_client
+        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        res = sb.table("user_settings") \
+                .select("settings") \
+                .eq("email", email) \
+                .execute()
+        if res.data:
+            return json.loads(res.data[0]["settings"])
+    except Exception as e:
+        print(f"Supabase load: {e}", flush=True)
+    return None
+
+def _sb_save_cfg(email: str, cfg: dict):
+    """Зберігає налаштування юзера в Supabase (upsert)."""
+    if not _supabase_available(): return
+    try:
+        from supabase import create_client
+        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        sb.table("user_settings").upsert({
+            "email":    email,
+            "settings": json.dumps(cfg, ensure_ascii=False),
+            "updated_at": datetime.utcnow().isoformat(),
+        }).execute()
+    except Exception as e:
+        print(f"Supabase save: {e}", flush=True)
+
+def _sb_load_leagues(email: str) -> set:
+    """Завантажує збережені ліги юзера з Supabase."""
+    if not _supabase_available(): return set()
+    try:
+        from supabase import create_client
+        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        res = sb.table("user_leagues") \
+                .select("leagues") \
+                .eq("email", email) \
+                .execute()
+        if res.data:
+            return set(json.loads(res.data[0]["leagues"]))
+    except Exception as e:
+        print(f"Supabase load leagues: {e}", flush=True)
+    return set()
+
+def _sb_save_leagues(email: str, leagues: set):
+    """Зберігає список ліг юзера в Supabase (upsert)."""
+    if not _supabase_available(): return
+    try:
+        from supabase import create_client
+        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        sb.table("user_leagues").upsert({
+            "email":   email,
+            "leagues": json.dumps(sorted(leagues), ensure_ascii=False),
+            "updated_at": datetime.utcnow().isoformat(),
+        }).execute()
+    except Exception as e:
+        print(f"Supabase save leagues: {e}", flush=True)
 
 # Очищаємо старі кеші рахунків і розкладу щоб час завжди перераховувався
 _now_ts = datetime.now().timestamp()
@@ -209,27 +355,42 @@ def is_interesting_match(team1: str, team2: str) -> bool:
     return match_interest_score(team1, team2) > 0
 
 def load_cfg():
-    d = dict(DEFAULT_CFG)
-    if os.path.exists(CFG_FILE):
-        try: d.update(json.load(open(CFG_FILE, encoding="utf-8")))
-        except: pass
-    return d
+    """Завантажує налаштування: спочатку Supabase, потім session_state, потім дефолт."""
+    # 1. Якщо вже є в session_state (швидкий шлях — не робимо зайвих запитів)
+    if "cfg_loaded" in st.session_state:
+        return dict(st.session_state.cfg_cache)
+    # 2. Пробуємо Supabase
+    from_sb = _sb_load_cfg(USER_EMAIL)
+    cfg = dict(DEFAULT_CFG)
+    if from_sb:
+        cfg.update(from_sb)
+    # 3. Кешуємо в session_state щоб не робити запит при кожному рерані
+    st.session_state.cfg_cache  = dict(cfg)
+    st.session_state.cfg_loaded = True
+    return cfg
 
-def save_cfg(d):
-    json.dump(d, open(CFG_FILE, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+def save_cfg(d: dict):
+    """Зберігає налаштування в Supabase + оновлює session_state."""
+    st.session_state.cfg_cache  = dict(d)
+    st.session_state.cfg_loaded = True
+    _sb_save_cfg(USER_EMAIL, d)
 
-def load_known_leagues():
-    """Загружает накопительный список лиг из отдельного файла."""
-    if os.path.exists(LEAGUES_FILE):
-        try: return set(json.load(open(LEAGUES_FILE, encoding="utf-8")))
-        except: pass
-    return set()
+def load_known_leagues() -> set:
+    """Завантажує накопичений список ліг юзера."""
+    if "leagues_loaded" in st.session_state:
+        return set(st.session_state.leagues_cache)
+    leagues = _sb_load_leagues(USER_EMAIL)
+    st.session_state.leagues_cache  = sorted(leagues)
+    st.session_state.leagues_loaded = True
+    return leagues
 
 def save_known_leagues(leagues: set):
-    """Сохраняет накопительный список лиг — только добавляет, никогда не удаляет."""
+    """Зберігає список ліг: тільки додає, ніколи не видаляє."""
     existing = load_known_leagues()
-    merged = sorted(existing | leagues)
-    json.dump(merged, open(LEAGUES_FILE, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    merged   = existing | leagues
+    st.session_state.leagues_cache  = sorted(merged)
+    st.session_state.leagues_loaded = True
+    _sb_save_leagues(USER_EMAIL, merged)
 
 CFG = load_cfg()
 TZ                 = CFG["tz_offset"]
@@ -1889,14 +2050,32 @@ refresh_svg = (
     '</svg>'
 )
 
-_col_logo, _col_mid, _col_right = st.columns([3, 5, 1])
+_col_logo, _col_mid, _col_right = st.columns([3, 5, 2])
 with _col_logo:
     st.markdown('<div class="site-title" style="padding:14px 0 10px">Sporter</div>', unsafe_allow_html=True)
 with _col_mid:
     pass
 with _col_right:
-    st.markdown('<div style="padding-top:14px">', unsafe_allow_html=True)
-    open_cfg = st.button("Настройки", key="open_cfg", use_container_width=True)
+    st.markdown('<div style="padding-top:10px;display:flex;gap:8px;align-items:center;justify-content:flex-end">', unsafe_allow_html=True)
+    btn_cols = st.columns([2, 2]) if _auth_available() else st.columns([1])
+    with btn_cols[0]:
+        open_cfg = st.button("Настройки", key="open_cfg", use_container_width=True)
+    if _auth_available() and len(btn_cols) > 1:
+        with btn_cols[1]:
+            # Показуємо аватар + ім'я або просто кнопку виходу
+            if USER_AVATAR:
+                st.markdown(
+                    f'<div style="display:flex;align-items:center;gap:6px;padding-top:4px">'
+                    f'<img src="{USER_AVATAR}" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(79,163,255,0.4)">'
+                    f'<span style="font-size:.78em;color:#6b8ab0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px">'
+                    f'{USER_NAME}</span></div>',
+                    unsafe_allow_html=True
+                )
+            if st.button("Выйти", key="logout_btn", use_container_width=True):
+                for k in ["user_email", "user_name", "user_avatar",
+                          "cfg_loaded", "cfg_cache", "leagues_loaded", "leagues_cache"]:
+                    st.session_state.pop(k, None)
+                st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     if open_cfg:
         settings_modal()

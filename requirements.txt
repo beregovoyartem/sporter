@@ -2,3 +2,6 @@ streamlit
 requests
 beautifulsoup4
 urllib3
+streamlit-oauth
+PyJWT
+supabase
