@@ -84,26 +84,63 @@ SB   = "rgba(6,12,30,0.97)"  if DARK else "rgba(230,235,250,0.98)"
 
 st.markdown(get_css(DARK, BG, CLR, CLRS, CARD, SB), unsafe_allow_html=True)
 
-# Аватар на бургері — накладаємо фото поверх стандартної кнопки
-# Підтримка різних версій Streamlit (різні data-testid для sidebar toggle)
-if USER_AVATAR:
-    st.markdown(f"""
-    <style>
-    [data-testid="collapsedControl"],
-    [data-testid="stSidebarCollapsedControl"],
-    button[aria-label="Open sidebar"],
-    button[title="Open sidebar"] {{
-        background-image:url('{USER_AVATAR}')!important;
-        background-size:cover!important;
-        background-position:center!important;
-        border-color:rgba(79,163,255,0.5)!important;
-    }}
-    [data-testid="collapsedControl"] svg,
-    [data-testid="stSidebarCollapsedControl"] svg,
-    button[aria-label="Open sidebar"] svg,
-    button[title="Open sidebar"] svg {{ display:none!important; }}
-    </style>
-    """, unsafe_allow_html=True)
+# Власна плаваюча кнопка-аватар — надійніше за CSS-хак на collapsedControl
+_avatar_html = (
+    f'<img src="{USER_AVATAR}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">'
+    if USER_AVATAR else '<span style="font-size:1.3em;color:#4fa3ff">☰</span>'
+)
+st.markdown(f"""
+<style>
+/* Ховаємо стандартний бургер Streamlit щоб не дублювався */
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"] {{
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    width: 1px !important; height: 1px !important;
+    overflow: hidden !important;
+}}
+#sp-avatar {{
+    position: fixed;
+    top: 12px; right: 16px;
+    z-index: 999999;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 2px solid rgba(79,163,255,0.5);
+    background: rgba(10,20,50,0.85);
+    cursor: pointer;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 14px rgba(0,60,180,0.35);
+    transition: border-color .2s, box-shadow .2s;
+}}
+#sp-avatar:hover {{
+    border-color: rgba(79,163,255,0.9);
+    box-shadow: 0 4px 20px rgba(0,80,220,0.55);
+}}
+</style>
+<div id="sp-avatar" title="Меню">{_avatar_html}</div>
+<script>
+(function() {{
+    document.getElementById('sp-avatar').addEventListener('click', function() {{
+        var selectors = [
+            '[data-testid="collapsedControl"]',
+            '[data-testid="stSidebarCollapsedControl"]',
+            'button[aria-label="Open sidebar"]',
+            'button[aria-label="открыть боковую панель"]',
+            'button[title="Open sidebar"]',
+        ];
+        for (var i = 0; i < selectors.length; i++) {{
+            var el = document.querySelector(selectors[i]);
+            if (el) {{ el.click(); return; }}
+        }}
+        // запасний: шукаємо кнопку з aria-expanded
+        var btns = document.querySelectorAll('button[aria-expanded]');
+        if (btns.length) {{ btns[0].click(); }}
+    }});
+}})();
+</script>
+""", unsafe_allow_html=True)
 
 # ─── РЕЙТИНГ МАТЧУ ───────────────────────────────────────────────────────────
 def club_rating(name: str) -> int:
