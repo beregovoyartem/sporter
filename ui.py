@@ -10,7 +10,7 @@ from config import FLAG_MAP, UCL_SVG, UEL_SVG, UECL_SVG, LEAGUE_POP, TZ_SITE
 
 
 def lhtml(url: str) -> str:
-    """Рендерить логотип команди напряму з URL (без конвертації в base64)."""
+    """Рендерить логотип команди напряму з URL."""
     if url:
         return (f'<img src="{url}" loading="lazy" '
                 f'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
@@ -26,16 +26,6 @@ def league_badge_html(name: str) -> str:
     if code:
         return f'<img class="lg-flag" src="https://flagcdn.com/16x12/{code}.png" alt="">'
     return ''
-
-
-def lhtml(url: str) -> str:
-    src = get_uri(url) if url else None
-    if not src: src = url
-    if src:
-        return (f'<img src="{src}" loading="lazy" '
-                f'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
-                f'<div class="tph" style="display:none">⚽</div>')
-    return '<div class="tph">⚽</div>'
 
 
 def league_sort_key(lg: str) -> tuple:

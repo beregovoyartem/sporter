@@ -8,6 +8,7 @@ parser_job.py — GitHub Action скрипт.
   python parser_job.py leagues   — оновлення ліг і логотипів (раз на добу)
 """
 import os
+import re
 import sys
 import json
 import time
@@ -33,7 +34,6 @@ def sb_headers():
 def sb_upsert(table: str, rows: list):
     if not rows:
         return
-    # Батчами по 500
     for i in range(0, len(rows), 500):
         batch = rows[i:i+500]
         r = requests.post(
@@ -63,6 +63,90 @@ def sb_get_meta(key: str) -> str:
     return rows[0]["value"] if rows else ""
 
 
+# ─── SUPABASE STORAGE — ЛОГОТИПИ ─────────────────────────────────────────────
+# Логотипи скачуються з livetv.sx один раз і зберігаються назавжди.
+# При повторних парсингах — просто перевіряємо наявність і повертаємо готовий URL.
+
+_logo_cache: dict = {}  # локальний кеш в межах одного запуску
+
+def upload_logo_to_storage(url: str) -> str | None:
+    """
+    Скачує логотип і завантажує в Supabase Storage (бакет 'logos').
+    Повертає публічний URL або None при помилці.
+    Якщо файл вже є в Storage — одразу повертає URL без повторного скачування.
+    """
+    if not url:
+        return None
+
+    # Локальний кеш — не робимо зайвих запитів в межах одного запуску
+    if url in _logo_cache:
+        return _logo_cache[url]
+
+    ext_m = re.search(r"\.(gif|png|jpg|jpeg|svg|webp)(\?.*)?$", url, re.I)
+    ext   = ext_m.group(1).lower() if ext_m else "gif"
+    fname = hashlib.md5(url.encode()).hexdigest()[:16] + "." + ext
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/logos/{fname}"
+
+    # Перевіряємо — вже є в Storage?
+    check = requests.get(public_url, timeout=5)
+    if check.status_code == 200:
+        _logo_cache[url] = public_url
+        return public_url
+
+    # Скачуємо з livetv.sx
+    try:
+        r = requests.get(
+            url, timeout=8,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+            verify=False,
+        )
+        r.raise_for_status()
+        if len(r.content) < 300:
+            _logo_cache[url] = None
+            return None
+    except Exception as e:
+        print(f"  Logo download error {url}: {e}", flush=True)
+        _logo_cache[url] = None
+        return None
+
+    # Визначаємо MIME
+    mime = {
+        "gif":  "image/gif",
+        "png":  "image/png",
+        "jpg":  "image/jpeg",
+        "jpeg": "image/jpeg",
+        "svg":  "image/svg+xml",
+        "webp": "image/webp",
+    }.get(ext, "image/gif")
+
+    # Завантажуємо в Storage
+    upload = requests.post(
+        f"{SUPABASE_URL}/storage/v1/object/logos/{fname}",
+        headers={
+            "apikey":        SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type":  mime,
+            "x-upsert":      "false",  # не перезаписувати якщо вже є
+        },
+        data=r.content,
+        timeout=15,
+    )
+
+    if upload.status_code in (200, 201):
+        _logo_cache[url] = public_url
+        return public_url
+
+    # Якщо помилка "already exists" (409) — файл вже є, просто повертаємо URL
+    if upload.status_code == 409:
+        _logo_cache[url] = public_url
+        return public_url
+
+    print(f"  Storage upload error {upload.status_code}: {upload.text[:150]}", flush=True)
+    # Fallback — повертаємо оригінальний URL, щоб хоч щось показалось
+    _logo_cache[url] = url
+    return url
+
+
 # ─── ІМПОРТ ПАРСЕРІВ (з поточної директорії) ─────────────────────────────────
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -72,12 +156,11 @@ class _MockST:
 
     @staticmethod
     def cache_data(fn=None, ttl=None, show_spinner=None):
-        """Декоратор @st.cache_data — просто повертає функцію без кешу."""
         def decorator(f):
             return f
         if fn is not None:
-            return fn  # @st.cache_data без дужок
-        return decorator  # @st.cache_data(ttl=...)
+            return fn
+        return decorator
 
     class secrets:
         @staticmethod
@@ -105,6 +188,24 @@ def run_matches():
     except Exception as e:
         print(f"  Gooool помилка: {e}", flush=True)
 
+    # Збираємо всі унікальні URL логотипів заздалегідь
+    logo_urls = set()
+    for m in all_matches:
+        if m.get("t1_logo"): logo_urls.add(m["t1_logo"])
+        if m.get("t2_logo"): logo_urls.add(m["t2_logo"])
+
+    print(f"  Завантажуємо {len(logo_urls)} логотипів в Storage...", flush=True)
+    uploaded = failed = skipped = 0
+    for logo_url in logo_urls:
+        result = upload_logo_to_storage(logo_url)
+        if result is None:
+            failed += 1
+        elif result == logo_url:
+            skipped += 1  # fallback — залишили оригінальний URL
+        else:
+            uploaded += 1
+    print(f"  Логотипи: {uploaded} завантажено, {skipped} fallback, {failed} помилок", flush=True)
+
     # Формуємо рядки для БД
     now = datetime.utcnow().isoformat()
     rows = []
@@ -121,23 +222,29 @@ def run_matches():
         except Exception:
             pass
 
+        # Логотипи: беремо з кешу (вже завантажені вище) або fallback на оригінальний URL
+        t1_logo_raw = m.get("t1_logo")
+        t2_logo_raw = m.get("t2_logo")
+        t1_logo = _logo_cache.get(t1_logo_raw, t1_logo_raw) if t1_logo_raw else None
+        t2_logo = _logo_cache.get(t2_logo_raw, t2_logo_raw) if t2_logo_raw else None
+
         rows.append({
-            "event_id":   eid,
-            "time":       m.get("time", now),
-            "team1":      m.get("team1", ""),
-            "team2":      m.get("team2", ""),
-            "league":     m.get("league", ""),
-            "league_raw": m.get("league_raw", ""),
-            "league_logo":m.get("league_logo"),
-            "status":     m.get("status", "upcoming"),
-            "score":      m.get("score"),
-            "url":        m.get("url", ""),
-            "t1_logo":    m.get("t1_logo"),
-            "t2_logo":    m.get("t2_logo"),
-            "is_top":     bool(m.get("is_top", False)),
-            "always_show":bool(m.get("always_show", False)),
-            "gooool_url": gurl,
-            "updated_at": now,
+            "event_id":    eid,
+            "time":        m.get("time", now),
+            "team1":       m.get("team1", ""),
+            "team2":       m.get("team2", ""),
+            "league":      m.get("league", ""),
+            "league_raw":  m.get("league_raw", ""),
+            "league_logo": m.get("league_logo"),
+            "status":      m.get("status", "upcoming"),
+            "score":       m.get("score"),
+            "url":         m.get("url", ""),
+            "t1_logo":     t1_logo,
+            "t2_logo":     t2_logo,
+            "is_top":      bool(m.get("is_top", False)),
+            "always_show": bool(m.get("always_show", False)),
+            "gooool_url":  gurl,
+            "updated_at":  now,
         })
 
     print(f"  Зберігаємо {len(rows)} матчів в Supabase...", flush=True)
@@ -167,7 +274,6 @@ def run_live():
     print(f"  Live матчів: {len(live_ids)}", flush=True)
     now = datetime.utcnow().isoformat()
 
-    # Оновлюємо статус і рахунок для live матчів
     rows = []
     for eid in live_ids:
         row = {
@@ -179,8 +285,7 @@ def run_live():
             row["score"] = live_scores[eid]
         rows.append(row)
 
-    # Також переводимо завершені матчі в finished
-    # (матчі які були live > 2 год тому)
+    # Переводимо завершені матчі в finished (були live > 2 год тому)
     cutoff = (datetime.utcnow() - timedelta(hours=2)).isoformat()
     old_live = sb_select("matches", f"status=eq.live&time=lt.{cutoff}&select=event_id")
     for m in old_live:
@@ -200,7 +305,6 @@ def run_live():
 def run_leagues():
     print(f"[{datetime.utcnow().isoformat()}] Оновлення ліг...", flush=True)
 
-    # Всі ліги з таблиці матчів
     rows = sb_select("matches", "select=league")
     leagues = sorted(set(r["league"] for r in rows if r.get("league")))
     _update_global_leagues(leagues)
