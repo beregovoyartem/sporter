@@ -29,90 +29,104 @@ def render_login_page():
         min-height:100vh;
     }
     .block-container{
-        padding-top:0!important;
-        max-width:480px!important;
-        padding-left:20px!important;
-        padding-right:20px!important;
+        padding:0!important;
+        margin:0 auto!important;
+        max-width:460px!important;
+        min-height:100vh!important;
+        display:flex!important;
+        flex-direction:column!important;
+        justify-content:center!important;
     }
-    @keyframes ts{0%{background-position:0%}100%{background-position:300%}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .block-container > div:first-child { margin-top:0!important; padding-top:0!important; }
+    section[data-testid="stMain"] > div { padding-top:0!important; }
 
-    .lp-wrap{
+    @keyframes ts{0%{background-position:0%}100%{background-position:300%}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+    .lp-outer{
         display:flex;flex-direction:column;align-items:center;
         justify-content:center;min-height:100vh;
-        padding:40px 0 60px;gap:0;
+        padding:32px 20px 48px;gap:0;
     }
     .lp-title{
         font-family:'Pacifico',cursive;
-        font-size:4.2em;
-        font-weight:400;
-        line-height:1.25;
-        padding:8px 4px 4px;
-        margin:0 0 10px;
+        font-size:4.4em;
+        line-height:1.3;
+        padding:6px 8px 10px;
+        margin:0 0 8px;
         background:linear-gradient(110deg,#a0650a 0%,#ffd234 25%,#ffe680 50%,#c8860a 75%,#ffd234 100%);
         background-size:300% auto;
         -webkit-background-clip:text;-webkit-text-fill-color:transparent;
         animation:ts 3.5s linear infinite, fadeUp .5s ease both;
-    }
-    .lp-sub{
-        color:#6b8ab0;font-size:.95em;font-weight:500;
-        margin:0 0 32px;letter-spacing:.3px;
-        animation:fadeUp .6s .1s ease both;
         text-align:center;
     }
+    .lp-sub{
+        color:#6b8ab0;font-size:.93em;font-weight:500;
+        margin:0 0 28px;
+        animation:fadeUp .6s .1s ease both;
+        text-align:center;letter-spacing:.2px;
+    }
     .lp-card{
-        background:rgba(10,20,50,0.75);
+        background:rgba(10,20,50,0.78);
         border:1px solid rgba(79,163,255,0.18);
         border-radius:20px;
-        padding:32px 36px 28px;
+        padding:28px 32px 24px;
         width:100%;
-        display:flex;flex-direction:column;align-items:center;gap:16px;
+        display:flex;flex-direction:column;align-items:center;gap:14px;
         box-shadow:0 8px 48px rgba(0,20,80,0.5);
         position:relative;overflow:hidden;
         animation:fadeUp .7s .15s ease both;
+        border-bottom-left-radius:0;
+        border-bottom-right-radius:0;
+        border-bottom:none;
     }
     .lp-card::before{
         content:'';position:absolute;top:0;left:0;right:0;height:2px;
         background:linear-gradient(90deg,#1a6fff,#00c6ff,#ffd234);opacity:.85;
     }
-    .lp-card-title{font-size:1.1em;font-weight:700;color:#dde6f5;margin:0;}
+    .lp-card-title{font-size:1.08em;font-weight:700;color:#dde6f5;margin:0;}
     .lp-card-sub{font-size:.82em;color:#4a6080;margin:0;text-align:center;line-height:1.55;}
     .lp-divider{
         width:100%;display:flex;align-items:center;gap:10px;
-        color:#2a3a5a;font-size:.78em;font-weight:500;
+        color:#2a3a5a;font-size:.77em;font-weight:500;
+        margin-bottom:2px;
     }
     .lp-divider::before,.lp-divider::after{content:'';flex:1;height:1px;background:rgba(79,163,255,0.12);}
-    .lp-footer{
-        margin-top:20px;color:#2a3a5a;font-size:.75em;text-align:center;
-        line-height:1.6;animation:fadeUp .9s .3s ease both;
-    }
-    /* кнопка OAuth — тільки на login-сторінці */
+
     .stButton > button{
         width:100%!important;
         background:#ffffff!important;color:#3c4043!important;
-        border:1px solid #dadce0!important;border-radius:22px!important;
-        padding:10px 20px!important;
+        border:1px solid rgba(79,163,255,0.25)!important;
+        border-top:none!important;
+        border-radius:0 0 20px 20px!important;
+        padding:0 20px!important;
         font-family:'Inter',sans-serif!important;font-size:.93em!important;font-weight:600!important;
-        height:46px!important;
-        box-shadow:0 1px 3px rgba(0,0,0,0.12)!important;
+        height:50px!important;
+        box-shadow:0 4px 20px rgba(0,20,80,0.35)!important;
         transition:box-shadow .15s,background .15s!important;
+        margin-top:0!important;
     }
     .stButton > button:hover{
-        background:#f8f9fa!important;
-        box-shadow:0 2px 8px rgba(0,0,0,0.16)!important;
+        background:#f4f7ff!important;
+        box-shadow:0 6px 24px rgba(0,40,160,0.22)!important;
+    }
+
+    .lp-footer{
+        margin-top:16px;color:#2a3a5a;font-size:.74em;text-align:center;
+        line-height:1.6;animation:fadeUp .9s .3s ease both;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="lp-wrap">', unsafe_allow_html=True)
-    st.markdown('<div class="lp-title">Sporter</div>', unsafe_allow_html=True)
-    st.markdown('<div class="lp-sub">Умное расписание футбольных матчей</div>', unsafe_allow_html=True)
-
     st.markdown("""
-    <div class="lp-card">
-        <div class="lp-card-title">Добро пожаловать</div>
-        <div class="lp-card-sub">Войдите чтобы сохранять настройки<br>и выбранные лиги между сессиями</div>
-        <div class="lp-divider">войти через</div>
+    <div class="lp-outer">
+        <div class="lp-title">Sporter</div>
+        <div class="lp-sub">Умное расписание футбольных матчей</div>
+        <div class="lp-card">
+            <div class="lp-card-title">Добро пожаловать</div>
+            <div class="lp-card-sub">Войдите чтобы сохранять настройки<br>и выбранные лиги между сессиями</div>
+            <div class="lp-divider">войти через</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -131,8 +145,10 @@ def render_login_page():
         use_container_width=True,
     )
 
-    st.markdown('<div class="lp-footer">🔒 Мы используем только ваш email для сохранения настроек</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="lp-footer">🔒 Мы используем только ваш email для сохранения настроек</div>',
+        unsafe_allow_html=True,
+    )
 
     if result and "token" in result:
         import jwt as pyjwt
