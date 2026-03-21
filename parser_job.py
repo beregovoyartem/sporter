@@ -68,20 +68,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Мокаємо streamlit перед імпортом парсерів
 class _MockST:
-    class _cache:
-        def __call__(self, *a, **kw):
-            def decorator(fn): return fn
-            return decorator
-        def clear(self): pass
-    cache_data = _cache()
-    secrets = {}
+    """Мок streamlit для запуску парсерів без Streamlit."""
 
     @staticmethod
-    def cache_data(fn=None, ttl=None):
-        if fn is None:
-            def decorator(f): return f
-            return decorator
-        return fn
+    def cache_data(fn=None, ttl=None, show_spinner=None):
+        """Декоратор @st.cache_data — просто повертає функцію без кешу."""
+        def decorator(f):
+            return f
+        if fn is not None:
+            return fn  # @st.cache_data без дужок
+        return decorator  # @st.cache_data(ttl=...)
+
+    class secrets:
+        @staticmethod
+        def get(key, default=None):
+            return os.environ.get(key, default)
 
 sys.modules["streamlit"] = _MockST()
 
