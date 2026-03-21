@@ -200,8 +200,38 @@ html,body,[class*="css"]{{font-family:'Inter',sans-serif}}
 div[data-testid="stTabs"] button{{font-size:.75em!important;font-weight:600!important;color:{CLRS}!important}}
 div[data-testid="stTabs"] button[aria-selected="true"]{{color:#4fa3ff!important}}
 
-section[data-testid="stSidebar"],
-[data-testid="collapsedControl"]{{display:none!important}}
+/* ── Sidebar стилі ── */
+section[data-testid="stSidebar"]{{
+    background:rgba(6,12,30,0.97)!important;
+    border-right:1px solid rgba(79,163,255,0.12)!important;
+    min-width:260px!important;max-width:260px!important;
+}}
+section[data-testid="stSidebar"] .stButton > button{{
+    background:rgba(79,163,255,0.07)!important;
+    color:#8ab4d8!important;
+    border:1px solid rgba(79,163,255,0.15)!important;
+    border-radius:10px!important;
+    font-size:.88em!important;font-weight:600!important;
+    height:40px!important;
+    transition:background .15s,border-color .15s!important;
+    box-shadow:none!important;
+}}
+section[data-testid="stSidebar"] .stButton > button:hover{{
+    background:rgba(79,163,255,0.15)!important;
+    border-color:rgba(79,163,255,0.35)!important;
+    color:#dde6f5!important;
+}}
+/* Кнопка бургер */
+[data-testid="collapsedControl"]{{
+    color:rgba(79,163,255,0.7)!important;
+}}
+[data-testid="collapsedControl"]:hover{{
+    color:#4fa3ff!important;
+}}
+/* Ховаємо заголовок sidebar (зайвий відступ зверху) */
+section[data-testid="stSidebar"] > div:first-child{{
+    padding-top:16px!important;
+}}
 
 .stCheckbox label span{{font-size:.82em!important}}
 

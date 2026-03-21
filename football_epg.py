@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 
 # ─── PAGE CONFIG — має бути першим викликом st ───────────────────────────────
-st.set_page_config(page_title="Sporter", layout="wide", initial_sidebar_state="auto")
+st.set_page_config(page_title="Sporter", layout="wide", initial_sidebar_state="collapsed")
 
 # ─── ЛОКАЛЬНІ МОДУЛІ ─────────────────────────────────────────────────────────
 from auth    import get_current_user, render_login_page, _auth_available
@@ -197,88 +197,37 @@ if to_cache:
         lc_bar.progress((i+1)/len(to_cache), text=f"Кэш лого: {i+1}/{len(to_cache)}")
     lc_bar.empty()
 
-# ─── HEADER ──────────────────────────────────────────────────────────────────
-_av_style = (
-    f'background-image:url("{USER_AVATAR}");background-size:cover;background-position:center;'
-    if USER_AVATAR else ''
-)
-_av_text = "" if USER_AVATAR else "👤"
-
-st.markdown(f"""
-<style>
-/* Ховаємо каретку в кнопці popover */
-div[data-testid="stPopover"] > div > button svg,
-div[data-testid="stPopover"] > div > button [data-testid="stMarkdownContainer"] + svg {{
-    display:none!important;
-}}
-div[data-testid="stPopover"] > div > button {{
-    {_av_style}
-    background-color:rgba(10,20,50,0.7)!important;
-    background-size:cover!important;background-position:center!important;
-    border:2px solid rgba(79,163,255,0.4)!important;
-    border-radius:50%!important;
-    width:42px!important;height:42px!important;min-height:42px!important;
-    max-width:42px!important;
-    padding:0!important;overflow:hidden!important;
-    box-shadow:0 2px 12px rgba(0,60,180,0.3)!important;
-}}
-div[data-testid="stPopover"] > div > button:hover {{
-    border-color:rgba(79,163,255,0.8)!important;
-}}
-div[data-testid="stPopover"] > div > button p,
-div[data-testid="stPopover"] > div > button span {{
-    {"opacity:0!important;font-size:0!important;width:0!important;height:0!important;" if USER_AVATAR else "font-size:1.4em!important;line-height:42px!important;margin:0!important;"}
-}}
-/* Дропдаун — без position:fixed, просто вирівнюємо вправо */
-div[data-testid="stPopoverBody"] {{
-    padding:6px!important;
-    min-width:220px!important;
-}}
-div[data-testid="stPopoverBody"] .stButton > button {{
-    background:transparent!important;border:none!important;border-radius:8px!important;
-    color:#dde6f5!important;font-size:.88em!important;font-weight:600!important;
-    height:38px!important;width:100%!important;
-    justify-content:flex-start!important;padding:0 10px!important;
-    box-shadow:none!important;text-align:left!important;
-}}
-div[data-testid="stPopoverBody"] .stButton > button:hover {{
-    background:rgba(79,163,255,0.1)!important;
-}}
-</style>
-""", unsafe_allow_html=True)
-
-# Лого зліва, порожня середина, аватар справа
-_col_logo, _col_mid, _col_av = st.columns([2, 7, 1])
-with _col_logo:
-    st.markdown(
-        '<div class="site-title" style="padding:14px 0 10px;overflow:visible">Sporter</div>',
-        unsafe_allow_html=True,
-    )
-with _col_av:
-    with st.popover(_av_text, use_container_width=False):
-        if USER_AVATAR:
-            st.markdown(
-                f'<div style="display:flex;align-items:center;gap:10px;'
-                f'padding:6px 8px 12px;border-bottom:1px solid rgba(79,163,255,0.12);margin-bottom:4px">'
-                f'<img src="{USER_AVATAR}" style="width:34px;height:34px;border-radius:50%;flex-shrink:0;'
-                f'border:2px solid rgba(79,163,255,0.3)">'
-                f'<div><div style="font-size:.83em;font-weight:600;color:#dde6f5">{USER_NAME}</div>'
-                f'<div style="font-size:.72em;color:#4a6080">{USER_EMAIL}</div></div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-        if st.button("Настройки", key="open_cfg", use_container_width=True):
-            st.session_state["_open_settings"] = True
-            st.rerun()
+# ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+with st.sidebar:
+    # Аватар + ім'я
+    if USER_AVATAR:
         st.markdown(
-            '<div style="height:1px;background:rgba(79,163,255,0.1);margin:4px 0"></div>',
+            f'<div style="display:flex;align-items:center;gap:12px;padding:8px 0 16px">'
+            f'<img src="{USER_AVATAR}" style="width:44px;height:44px;border-radius:50%;'
+            f'border:2px solid rgba(79,163,255,0.4);flex-shrink:0">'
+            f'<div>'
+            f'<div style="font-size:.95em;font-weight:700;color:#dde6f5">{USER_NAME}</div>'
+            f'<div style="font-size:.75em;color:#4a6080;margin-top:2px">{USER_EMAIL}</div>'
+            f'</div></div>',
             unsafe_allow_html=True,
         )
-        if st.button("→ Выйти", key="logout_btn", use_container_width=True):
-            for k in ["user_email","user_name","user_avatar",
-                      "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
-                st.session_state.pop(k, None)
-            st.rerun()
+    else:
+        st.markdown(f'<div style="padding:8px 0 16px;color:#dde6f5;font-weight:700">{USER_NAME}</div>',
+                    unsafe_allow_html=True)
+
+    st.divider()
+
+    if st.button("⚙  Настройки", key="open_cfg", use_container_width=True):
+        st.session_state["_open_settings"] = True
+        st.rerun()
+
+    st.markdown("<div style='flex:1'></div>", unsafe_allow_html=True)
+
+    if st.button("→  Выйти", key="logout_btn", use_container_width=True):
+        for k in ["user_email","user_name","user_avatar",
+                  "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
+            st.session_state.pop(k, None)
+        st.rerun()
 
 if st.session_state.pop("_open_settings", False):
     settings_modal(
@@ -289,6 +238,12 @@ if st.session_state.pop("_open_settings", False):
         SHOW_INTERESTING=SHOW_INTERESTING, BOOST_UKRAINE=BOOST_UKRAINE,
         ACTIVE_LGS=ACTIVE_LGS,
     )
+
+# ─── HEADER (тільки лого) ─────────────────────────────────────────────────────
+st.markdown(
+    '<div class="site-title" style="padding:18px 0 12px;overflow:visible">Sporter</div>',
+    unsafe_allow_html=True,
+)
 
 # ─── ДАТИ → ТАБКІ → МАТЧІ ────────────────────────────────────────────────────
 today    = now.date()
