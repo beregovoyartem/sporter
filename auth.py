@@ -28,24 +28,35 @@ def render_login_page():
         min-height: 100vh;
     }
 
-    /* Центруємо контент вертикально */
-    .block-container {
-        max-width: 440px !important;
-        padding: 0 20px !important;
-        padding-bottom: 0 !important;
-        margin: 0 auto !important;
+    /* Layout — фіксована висота + скрол на main */
+    section[data-testid="stMain"] {
+        overflow: hidden !important;
+        height: 100vh !important;
+        padding: 0 !important;
     }
     section[data-testid="stMain"] > div {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding-bottom: 0 !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
-    section[data-testid="stMain"] { padding-bottom: 0 !important; }
-    div[data-testid="stBottom"] { display: none !important; }
+    .block-container {
+        max-width: 440px !important;
+        width: 100% !important;
+        padding: 0 20px !important;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+    /* Прибираємо всі зайві відступи Streamlit */
+    div[data-testid="stBottom"],
+    div[data-testid="InputInstructions"],
+    footer { display: none !important; }
+    .stAppDeployButton { display: none !important; }
 
-    /* Прибираємо всі gaps між елементами */
+    /* Прибираємо gaps між елементами */
     .block-container > div > div > div > div { margin: 0 !important; padding: 0 !important; }
     /* iframe OAuth кнопки */
     .block-container iframe { display: block !important; margin: 0 !important; }
@@ -120,6 +131,11 @@ def render_login_page():
     }
 
     /* Кнопка OAuth — без відступу, пришита до картки */
+    /* Streamlit додає gap між елементами — компенсуємо від'ємним margin */
+    .block-container > div > div > div > div:has(> .stButton),
+    .block-container > div > div > div > div:has(> iframe) {
+        margin-top: -1px !important;
+    }
     .stButton > button {
         width: 100% !important;
         background: #fff !important;

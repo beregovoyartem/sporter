@@ -246,7 +246,10 @@ section[data-testid="stSidebar"] > div:first-child{{
 [data-testid="stDialog"] h3{{color:#dde6f5!important;font-size:1.1em!important}}
 
 /* Бургер — прибитий справа, виглядає як аватар */
-[data-testid="collapsedControl"] {{
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"],
+button[aria-label="Open sidebar"],
+button[title="Open sidebar"] {{
     position:fixed!important;
     top:10px!important;
     right:16px!important;
@@ -255,18 +258,23 @@ section[data-testid="stSidebar"] > div:first-child{{
     height:40px!important;
     border-radius:50%!important;
     border:2px solid rgba(79,163,255,0.4)!important;
-    background:rgba(10,20,50,0.8)!important;
+    background-color:rgba(10,20,50,0.8)!important;
     display:flex!important;
     align-items:center!important;
     justify-content:center!important;
     cursor:pointer!important;
     box-shadow:0 2px 12px rgba(0,60,180,0.3)!important;
+    overflow:hidden!important;
 }}
-[data-testid="collapsedControl"]:hover {{
+[data-testid="collapsedControl"]:hover,
+[data-testid="stSidebarCollapsedControl"]:hover,
+button[aria-label="Open sidebar"]:hover {{
     border-color:rgba(79,163,255,0.8)!important;
-    background:rgba(20,40,90,0.9)!important;
+    background-color:rgba(20,40,90,0.9)!important;
 }}
-[data-testid="collapsedControl"] svg {{
+[data-testid="collapsedControl"] svg,
+[data-testid="stSidebarCollapsedControl"] svg,
+button[aria-label="Open sidebar"] svg {{
     width:18px!important;height:18px!important;
     fill:rgba(79,163,255,0.9)!important;
 }}

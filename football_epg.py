@@ -85,16 +85,23 @@ SB   = "rgba(6,12,30,0.97)"  if DARK else "rgba(230,235,250,0.98)"
 st.markdown(get_css(DARK, BG, CLR, CLRS, CARD, SB), unsafe_allow_html=True)
 
 # Аватар на бургері — накладаємо фото поверх стандартної кнопки
+# Підтримка різних версій Streamlit (різні data-testid для sidebar toggle)
 if USER_AVATAR:
     st.markdown(f"""
     <style>
-    [data-testid="collapsedControl"] {{
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    button[aria-label="Open sidebar"],
+    button[title="Open sidebar"] {{
         background-image:url('{USER_AVATAR}')!important;
         background-size:cover!important;
         background-position:center!important;
         border-color:rgba(79,163,255,0.5)!important;
     }}
-    [data-testid="collapsedControl"] svg {{ display:none!important; }}
+    [data-testid="collapsedControl"] svg,
+    [data-testid="stSidebarCollapsedControl"] svg,
+    button[aria-label="Open sidebar"] svg,
+    button[title="Open sidebar"] svg {{ display:none!important; }}
     </style>
     """, unsafe_allow_html=True)
 
