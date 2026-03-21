@@ -4,12 +4,12 @@ on:
   schedule:
     # Кожні 2 години
     - cron: '0 */2 * * *'
-  workflow_dispatch:  # Ручний запуск з GitHub UI
+  workflow_dispatch:
 
 jobs:
   parse:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
