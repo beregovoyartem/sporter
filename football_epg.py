@@ -32,7 +32,8 @@ from parsers import (
     find_gooool, fetch_event_page, fetch_score_from_gooool,
     logo_uri, logo_path, CACHE_DIR,
 )
-from ui import render_card, build_top_section, settings_modal, league_sort_key
+from ui    import render_card, build_top_section, settings_modal, league_sort_key
+from admin import render_admin_page, is_admin
 
 # ─── АВТОРИЗАЦІЯ ─────────────────────────────────────────────────────────────
 _user = get_current_user()
@@ -202,7 +203,18 @@ if to_cache:
 # ─── HEADER ──────────────────────────────────────────────────────────────────
 # Спочатку кнопки (зверху), потім аватар + лого
 
-_bcol1, _bcol2 = st.columns([1, 1])
+# Адмін-сторінка — показуємо якщо запрошено
+if st.session_state.get("_open_admin"):
+    st.session_state.pop("_open_admin", None)
+    render_admin_page(USER_EMAIL)
+    st.stop()
+
+if is_admin(USER_EMAIL):
+    _bcol1, _bcol2, _bcol3 = st.columns([1, 1, 1])
+else:
+    _bcol1, _bcol2 = st.columns([1, 1])
+    _bcol3 = None
+
 with _bcol1:
     if st.button("Настройки", key="open_cfg", use_container_width=True):
         st.session_state["_open_settings"] = True
@@ -212,6 +224,11 @@ with _bcol2:
         from auth import logout
         logout()
         st.rerun()
+if _bcol3:
+    with _bcol3:
+        if st.button("👑 Админ", key="open_admin", use_container_width=True):
+            st.session_state["_open_admin"] = True
+            st.rerun()
 
 _avatar_src = USER_AVATAR or ""
 # Google фото: замінюємо розмір на більший щоб не пікселилось і не обрізалось
