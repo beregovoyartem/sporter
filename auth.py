@@ -1,8 +1,12 @@
 """
 auth.py — Google OAuth через streamlit-oauth та сторінка логіну.
-Сесія зберігається в cookies через extra_streamlit_components.
+Сесія зберігається через Supabase: при логіні — пишемо token_key в БД,
+при завантаженні — читаємо з st.query_params і звіряємо з БД.
+Fallback: якщо Supabase недоступний — тільки session_state (як раніше).
 """
 import streamlit as st
+import hashlib
+import json
 
 
 def _auth_available() -> bool:
@@ -12,59 +16,80 @@ def _auth_available() -> bool:
         return False
 
 
-def _get_cookie_manager():
+# ─── PERSISTENT SESSION via Supabase ─────────────────────────────────────────
+
+def _sb_available() -> bool:
     try:
-        import extra_streamlit_components as stx
-        return stx.CookieManager(key="sp_cm")
+        return bool(st.secrets.get("SUPABASE_URL") and st.secrets.get("SUPABASE_KEY"))
     except Exception:
-        return None
+        return False
 
 
-def _save_session_cookies(email: str, name: str, avatar: str):
-    cm = _get_cookie_manager()
-    if cm is None:
+def _make_token(email: str) -> str:
+    """Простий детермінований токен на основі email + secret."""
+    secret = st.secrets.get("GOOGLE_CLIENT_SECRET", "sporter_secret")
+    return hashlib.sha256(f"{email}:{secret}".encode()).hexdigest()[:32]
+
+
+def _sb_save_session(email: str, name: str, avatar: str):
+    if not _sb_available():
         return
     try:
-        from datetime import datetime, timedelta
-        expires = datetime.now() + timedelta(days=30)
-        cm.set("sp_email",  email,  expires_at=expires)
-        cm.set("sp_name",   name,   expires_at=expires)
-        cm.set("sp_avatar", avatar, expires_at=expires)
+        from supabase import create_client
+        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        token = _make_token(email)
+        sb.table("user_sessions").upsert({
+            "token": token,
+            "email": email,
+            "name":  name,
+            "avatar": avatar,
+        }).execute()
+        # Зберігаємо token в query params щоб пережив перезавантаження
+        st.query_params["t"] = token
+    except Exception as e:
+        print(f"Session save error: {e}", flush=True)
+
+
+def _sb_clear_session(email: str):
+    if not _sb_available():
+        return
+    try:
+        from supabase import create_client
+        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        token = _make_token(email)
+        sb.table("user_sessions").delete().eq("token", token).execute()
+    except Exception as e:
+        print(f"Session clear error: {e}", flush=True)
+    try:
+        st.query_params.clear()
     except Exception:
         pass
 
 
-def _clear_session_cookies():
-    cm = _get_cookie_manager()
-    if cm is None:
-        return
-    try:
-        cm.delete("sp_email")
-        cm.delete("sp_name")
-        cm.delete("sp_avatar")
-    except Exception:
-        pass
-
-
-def _restore_from_cookies():
+def _restore_from_token():
+    """При завантаженні сторінки відновлює сесію з ?t= параметра."""
     if st.session_state.get("user_email"):
         return
-    cm = _get_cookie_manager()
-    if cm is None:
+    token = st.query_params.get("t", "")
+    if not token or not _sb_available():
         return
     try:
-        cookies = cm.get_all()
-        email = cookies.get("sp_email", "")
-        if email:
-            st.session_state["user_email"]  = email
-            st.session_state["user_name"]   = cookies.get("sp_name", email)
-            st.session_state["user_avatar"] = cookies.get("sp_avatar", "")
-    except Exception:
-        pass
+        from supabase import create_client
+        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        res = sb.table("user_sessions").select("email,name,avatar").eq("token", token).execute()
+        if res.data:
+            row = res.data[0]
+            st.session_state["user_email"]  = row["email"]
+            st.session_state["user_name"]   = row.get("name", row["email"])
+            st.session_state["user_avatar"] = row.get("avatar", "")
+    except Exception as e:
+        print(f"Session restore error: {e}", flush=True)
 
+
+# ─── LOGIN PAGE ───────────────────────────────────────────────────────────────
 
 def render_login_page():
-    _restore_from_cookies()
+    _restore_from_token()
     if st.session_state.get("user_email"):
         st.rerun()
         return
@@ -92,9 +117,7 @@ def render_login_page():
     }
     section[data-testid="stMain"] > div {
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        display: flex; flex-direction: column; justify-content: center;
         padding-bottom: 0 !important;
     }
     section[data-testid="stMain"] { padding-bottom: 0 !important; }
@@ -105,49 +128,37 @@ def render_login_page():
     @keyframes ts { 0% { background-position: 0% } 100% { background-position: 300% } }
 
     .lp-title {
-        font-family: 'Pacifico', cursive;
-        font-size: 4em; line-height: 1.2;
+        font-family: 'Pacifico', cursive; font-size: 4em; line-height: 1.2;
         padding: 4px 4px 16px; margin: 0 0 4px;
         background: linear-gradient(110deg,#a0650a 0%,#ffd234 25%,#ffe680 50%,#c8860a 75%,#ffd234 100%);
-        background-size: 300% auto;
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        animation: ts 3.5s linear infinite;
-        text-align: center; display: block; overflow: visible;
+        background-size: 300% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        animation: ts 3.5s linear infinite; text-align: center; display: block; overflow: visible;
     }
     .lp-sub {
         color: #6b8ab0; font-size: .93em; font-weight: 500;
         text-align: center; margin: 0 0 20px; display: block;
     }
     .lp-card {
-        background: rgba(10,20,50,0.78);
-        border: 1px solid rgba(79,163,255,0.18);
-        border-radius: 18px;
-        padding: 24px 28px 20px;
-        position: relative; overflow: hidden;
+        background: rgba(10,20,50,0.78); border: 1px solid rgba(79,163,255,0.18);
+        border-radius: 18px; padding: 24px 28px 20px; position: relative; overflow: hidden;
     }
     .lp-card::before {
-        content: ''; position: absolute;
-        top: 0; left: 0; right: 0; height: 2px;
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
         background: linear-gradient(90deg, #1a6fff, #00c6ff, #ffd234);
     }
-    .lp-card-title {
-        font-size: 1.05em; font-weight: 700; color: #dde6f5;
-        text-align: center; margin-bottom: 8px;
-    }
+    .lp-card-title { font-size: 1.05em; font-weight: 700; color: #dde6f5; text-align: center; margin-bottom: 8px; }
     .lp-card-sub { font-size: .82em; color: #4a6080; text-align: center; line-height: 1.55; }
     .lp-divider {
         display: flex; align-items: center; gap: 10px;
         color: #2a3a5a; font-size: .75em; font-weight: 500; margin-top: 16px;
     }
-    .lp-divider::before, .lp-divider::after {
-        content: ''; flex: 1; height: 1px; background: rgba(79,163,255,0.12);
-    }
+    .lp-divider::before, .lp-divider::after { content: ''; flex: 1; height: 1px; background: rgba(79,163,255,0.12); }
     .stButton > button {
         width: 100% !important; background: #fff !important; color: #3c4043 !important;
-        border: 1px solid rgba(79,163,255,0.2) !important;
-        border-radius: 14px !important; height: 48px !important;
-        font-family: 'Inter', sans-serif !important; font-size: .93em !important;
-        font-weight: 600 !important; box-shadow: 0 4px 20px rgba(0,20,80,0.3) !important;
+        border: 1px solid rgba(79,163,255,0.2) !important; border-radius: 14px !important;
+        height: 48px !important; font-family: 'Inter', sans-serif !important;
+        font-size: .93em !important; font-weight: 600 !important;
+        box-shadow: 0 4px 20px rgba(0,20,80,0.3) !important;
         margin: 10px 0 0 !important; padding: 0 !important;
     }
     .stButton > button:hover { background: #f4f7ff !important; }
@@ -184,23 +195,25 @@ def render_login_page():
     if result and "token" in result:
         import jwt as pyjwt
         try:
-            info = pyjwt.decode(result["token"]["id_token"], options={"verify_signature": False})
+            info   = pyjwt.decode(result["token"]["id_token"], options={"verify_signature": False})
             email  = info.get("email", "")
             name   = info.get("name", info.get("email", ""))
             avatar = info.get("picture", "")
             st.session_state["user_email"]  = email
             st.session_state["user_name"]   = name
             st.session_state["user_avatar"] = avatar
-            _save_session_cookies(email, name, avatar)
+            _sb_save_session(email, name, avatar)
             st.rerun()
         except Exception as e:
             st.error(f"Ошибка авторизации: {e}")
 
 
+# ─── PUBLIC API ───────────────────────────────────────────────────────────────
+
 def get_current_user() -> dict | None:
     if not _auth_available():
         return {"email": "local", "name": "Local", "avatar": ""}
-    _restore_from_cookies()
+    _restore_from_token()
     email = st.session_state.get("user_email")
     if not email:
         return None
@@ -212,8 +225,10 @@ def get_current_user() -> dict | None:
 
 
 def logout():
-    """Повний вихід — чистить session_state і cookies."""
-    _clear_session_cookies()
+    """Повний вихід — чистить session і токен в БД."""
+    email = st.session_state.get("user_email", "")
+    if email:
+        _sb_clear_session(email)
     for k in ["user_email", "user_name", "user_avatar",
               "cfg_loaded", "cfg_cache", "leagues_loaded", "leagues_cache"]:
         st.session_state.pop(k, None)
