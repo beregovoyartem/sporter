@@ -203,9 +203,8 @@ if to_cache:
 # ─── HEADER ──────────────────────────────────────────────────────────────────
 # Спочатку кнопки (зверху), потім аватар + лого
 
-# Адмін-сторінка — показуємо якщо запрошено
-if st.session_state.get("_open_admin"):
-    st.session_state.pop("_open_admin", None)
+# Адмін-сторінка — використовуємо query_params щоб пережити rerun
+if st.query_params.get("page") == "admin" and is_admin(USER_EMAIL):
     render_admin_page(USER_EMAIL)
     st.stop()
 
@@ -227,7 +226,7 @@ with _bcol2:
 if _bcol3:
     with _bcol3:
         if st.button("👑 Админ", key="open_admin", use_container_width=True):
-            st.session_state["_open_admin"] = True
+            st.query_params["page"] = "admin"
             st.rerun()
 
 _avatar_src = USER_AVATAR or ""

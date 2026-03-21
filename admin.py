@@ -213,8 +213,8 @@ def render_admin_page(user_email: str):
 
     st.divider()
     if st.button("← Назад на главную", key="adm_back"):
-        # Чистимо кеш адмінки
         for k in ["adm_users", "adm_all_leagues", "adm_lg_override",
                   "adm_lg_gen", "adm_usr_override", "adm_usr_gen"]:
             st.session_state.pop(k, None)
+        st.query_params.clear()
         st.rerun()
