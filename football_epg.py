@@ -199,38 +199,43 @@ if to_cache:
         lc_bar.progress((i+1)/len(to_cache), text=f"Кэш лого: {i+1}/{len(to_cache)}")
     lc_bar.empty()
 
-# ─── TOPBAR (замість sidebar) ────────────────────────────────────────────────
+# ─── TOPBAR ──────────────────────────────────────────────────────────────────
 _avatar_img = (
-    f'<img src="{USER_AVATAR}" style="width:34px;height:34px;border-radius:50%;'
-    f'object-fit:cover;border:2px solid rgba(79,163,255,0.45);flex-shrink:0">'
+    f'<img src="{USER_AVATAR}" style="width:38px;height:38px;border-radius:50%;'
+    f'object-fit:cover;border:2px solid rgba(79,163,255,0.5)">'
     if USER_AVATAR else
-    f'<div style="width:34px;height:34px;border-radius:50%;background:rgba(79,163,255,0.15);'
-    f'border:2px solid rgba(79,163,255,0.35);display:flex;align-items:center;'
-    f'justify-content:center;font-size:1em;flex-shrink:0">👤</div>'
-)
-st.markdown(
-    f'<div class="sp-topbar">'
-    f'  <div class="sp-topbar-left">'
-    f'    {_avatar_img}'
-    f'    <span class="sp-topbar-name">{USER_NAME}</span>'
-    f'  </div>'
-    f'  <div class="sp-topbar-right" id="sp-topbar-btns"></div>'
-    f'</div>',
-    unsafe_allow_html=True,
+    f'<div style="width:38px;height:38px;border-radius:50%;background:rgba(79,163,255,0.12);'
+    f'border:2px solid rgba(79,163,255,0.3);display:flex;align-items:center;'
+    f'justify-content:center;font-size:1.1em">👤</div>'
 )
 
-# Кнопки в topbar через st.columns щоб зберегти Streamlit-логіку
-_tb_spacer, _tb_cfg, _tb_out = st.columns([100, 1, 1])
-with _tb_cfg:
-    if st.button("⚙", key="open_cfg", help="Настройки"):
+_col_user, _col_cfg, _col_out = st.columns([1, 0.07, 0.07])
+
+with _col_user:
+    st.markdown(
+        f'<div class="sp-topbar-user">'
+        f'  {_avatar_img}'
+        f'  <div class="sp-topbar-info">'
+        f'    <span class="sp-topbar-name">{USER_NAME}</span>'
+        f'    <span class="sp-topbar-email">{USER_EMAIL}</span>'
+        f'  </div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+with _col_cfg:
+    if st.button("⚙", key="open_cfg", help="Настройки", use_container_width=True):
         st.session_state["_open_settings"] = True
         st.rerun()
-with _tb_out:
-    if st.button("→", key="logout_btn", help="Выйти"):
+
+with _col_out:
+    if st.button("⏻", key="logout_btn", help="Выйти", use_container_width=True):
         for k in ["user_email","user_name","user_avatar",
                   "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
             st.session_state.pop(k, None)
         st.rerun()
+
+st.markdown('<div class="sp-topbar-divider"></div>', unsafe_allow_html=True)
 
 if st.session_state.pop("_open_settings", False):
     settings_modal(
