@@ -22,53 +22,74 @@ section[data-testid="stMain"]{{margin-left:0!important;}}
 .lp-outer,.lp-title,.lp-sub,.lp-card,.lp-footer{{display:none!important}}
 
 /* ── Topbar ── */
-/* Прибираємо зайві відступи між рядками колонок topbar */
-div[data-testid="stHorizontalBlock"]:has(.sp-topbar-user) {{
-    align-items:center!important;
-    gap:8px!important;
-    padding:6px 0 6px!important;
-    border-bottom:1px solid rgba(79,163,255,0.1)!important;
-    margin-bottom:8px!important;
+.sp-topbar {{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 0 0;
+    border-bottom:1px solid rgba(79,163,255,0.1);
+    margin-bottom:0;
 }}
-div[data-testid="stHorizontalBlock"]:has(.sp-topbar-user) > div[data-testid="stColumn"] {{
-    padding:0!important;
+.sp-topbar-user {{
+    display:flex;align-items:center;gap:10px;min-width:0;
 }}
-.sp-topbar-user{{
-    display:flex;align-items:center;gap:10px;min-width:0;padding:2px 0;
-}}
-.sp-topbar-info{{
+.sp-topbar-info {{
     display:flex;flex-direction:column;gap:1px;min-width:0;
 }}
-.sp-topbar-name{{
-    font-size:.9em;font-weight:700;color:{CLR};
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    line-height:1.3;
+.sp-topbar-name {{
+    font-size:.92em;font-weight:700;color:{CLR};
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;
 }}
-.sp-topbar-email{{
-    font-size:.72em;font-weight:400;color:{CLRS};
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    opacity:.7;line-height:1.2;
+.sp-topbar-email {{
+    font-size:.72em;color:{CLRS};opacity:.75;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;
 }}
-.sp-topbar-divider{{
-    height:1px;background:rgba(79,163,255,0.08);margin:0 0 6px;display:none;
+/* Підтягуємо рядок з кнопками (наступний stHorizontalBlock) вгору щоб злитись з topbar */
+.sp-topbar + div + div[data-testid="stHorizontalBlock"],
+.sp-topbar + div[data-testid="stHorizontalBlock"] {{
+    margin-top:-52px!important;
+    padding-bottom:6px!important;
+    border-bottom:1px solid rgba(79,163,255,0.1)!important;
+    margin-bottom:6px!important;
+    display:flex!important;
+    justify-content:flex-end!important;
+    gap:6px!important;
+    align-items:center!important;
 }}
-/* Кнопки у колонках topbar */
-div[data-testid="stHorizontalBlock"]:has(.sp-topbar-user) .stButton > button {{
+.sp-topbar + div + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+.sp-topbar + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+    flex:0 0 auto!important;
+    width:auto!important;
+    min-width:0!important;
+    padding:0!important;
+}}
+.sp-topbar + div + div[data-testid="stHorizontalBlock"] .stButton > button,
+.sp-topbar + div[data-testid="stHorizontalBlock"] .stButton > button {{
     background:rgba(79,163,255,0.07)!important;
     color:#7a9abf!important;
-    border:1px solid rgba(79,163,255,0.15)!important;
+    border:1px solid rgba(79,163,255,0.18)!important;
     border-radius:9px!important;
-    height:36px!important;
-    font-size:1em!important;
-    padding:0 10px!important;
+    height:34px!important;
+    font-size:.8em!important;font-weight:600!important;
+    padding:0 14px!important;
     box-shadow:none!important;
-    transition:background .15s,border-color .15s,color .15s!important;
     white-space:nowrap!important;
+    transition:background .15s,border-color .15s,color .15s!important;
+    width:auto!important;min-width:unset!important;
 }}
-div[data-testid="stHorizontalBlock"]:has(.sp-topbar-user) .stButton > button:hover {{
+.sp-topbar + div + div[data-testid="stHorizontalBlock"] .stButton > button:hover,
+.sp-topbar + div[data-testid="stHorizontalBlock"] .stButton > button:hover {{
     background:rgba(79,163,255,0.16)!important;
     border-color:rgba(79,163,255,0.4)!important;
     color:#dde6f5!important;
+}}
+@media (max-width: 640px) {{
+    .sp-topbar + div + div[data-testid="stHorizontalBlock"],
+    .sp-topbar + div[data-testid="stHorizontalBlock"] {{
+        margin-top:-44px!important;
+    }}
+    .sp-topbar-name {{ font-size:.82em; }}
+    .sp-topbar-email {{ display:none; }}
 }}
 
 .site-title{{

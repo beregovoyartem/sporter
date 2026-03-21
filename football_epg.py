@@ -201,41 +201,39 @@ if to_cache:
 
 # ─── TOPBAR ──────────────────────────────────────────────────────────────────
 _avatar_img = (
-    f'<img src="{USER_AVATAR}" style="width:38px;height:38px;border-radius:50%;'
-    f'object-fit:cover;border:2px solid rgba(79,163,255,0.5)">'
+    f'<img src="{USER_AVATAR}" style="width:40px;height:40px;border-radius:50%;'
+    f'object-fit:cover;border:2px solid rgba(79,163,255,0.5);flex-shrink:0">'
     if USER_AVATAR else
-    f'<div style="width:38px;height:38px;border-radius:50%;background:rgba(79,163,255,0.12);'
+    f'<div style="width:40px;height:40px;border-radius:50%;background:rgba(79,163,255,0.12);'
     f'border:2px solid rgba(79,163,255,0.3);display:flex;align-items:center;'
-    f'justify-content:center;font-size:1.1em">👤</div>'
+    f'justify-content:center;font-size:1.2em;flex-shrink:0">👤</div>'
+)
+st.markdown(
+    f'<div class="sp-topbar">'
+    f'  <div class="sp-topbar-user">'
+    f'    {_avatar_img}'
+    f'    <div class="sp-topbar-info">'
+    f'      <span class="sp-topbar-name">{USER_NAME}</span>'
+    f'      <span class="sp-topbar-email">{USER_EMAIL}</span>'
+    f'    </div>'
+    f'  </div>'
+    f'  <div class="sp-topbar-actions" id="sp-actions-slot"></div>'
+    f'</div>',
+    unsafe_allow_html=True,
 )
 
-_col_user, _col_cfg, _col_out = st.columns([1, 0.07, 0.07])
-
-with _col_user:
-    st.markdown(
-        f'<div class="sp-topbar-user">'
-        f'  {_avatar_img}'
-        f'  <div class="sp-topbar-info">'
-        f'    <span class="sp-topbar-name">{USER_NAME}</span>'
-        f'    <span class="sp-topbar-email">{USER_EMAIL}</span>'
-        f'  </div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-
-with _col_cfg:
-    if st.button("⚙", key="open_cfg", help="Настройки", use_container_width=True):
+# Кнопки рендеримо окремо — CSS підтягує їх у .sp-topbar-actions через негативний margin
+_btn_col1, _btn_col2 = st.columns([1, 1])
+with _btn_col1:
+    if st.button("⚙ Настройки", key="open_cfg", use_container_width=True):
         st.session_state["_open_settings"] = True
         st.rerun()
-
-with _col_out:
-    if st.button("⏻", key="logout_btn", help="Выйти", use_container_width=True):
+with _btn_col2:
+    if st.button("⏻ Выйти", key="logout_btn", use_container_width=True):
         for k in ["user_email","user_name","user_avatar",
                   "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
             st.session_state.pop(k, None)
         st.rerun()
-
-st.markdown('<div class="sp-topbar-divider"></div>', unsafe_allow_html=True)
 
 if st.session_state.pop("_open_settings", False):
     settings_modal(
