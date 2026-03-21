@@ -84,51 +84,7 @@ SB   = "rgba(6,12,30,0.97)"  if DARK else "rgba(230,235,250,0.98)"
 
 st.markdown(get_css(DARK, BG, CLR, CLRS, CARD, SB), unsafe_allow_html=True)
 
-# Власна плаваюча кнопка-аватар поверх прихованого стандартного бургера
-_avatar_html = (
-    f'<img src="{USER_AVATAR}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">'
-    if USER_AVATAR else '<span style="font-size:1.3em;color:#4fa3ff">☰</span>'
-)
-st.markdown(f"""
-<style>
-/* Стандартний бургер — залишаємо в DOM і клікабельним, але невидимим.
-   Наш #sp-avatar лежить поверх нього і при кліку тригерить його. */
-[data-testid="collapsedControl"],
-[data-testid="stSidebarCollapsedControl"] {{
-    opacity: 0 !important;
-    position: fixed !important;
-    top: 12px !important; right: 16px !important;
-    width: 42px !important; height: 42px !important;
-    z-index: 1000000 !important;
-    cursor: pointer !important;
-}}
-/* Фікс зсуву контенту вліво коли sidebar collapsed */
-.stMainBlockContainer, section[data-testid="stMain"] > div > div {{
-    margin-left: 0 !important;
-    padding-left: 1rem !important;
-}}
-#sp-avatar {{
-    position: fixed;
-    top: 12px; right: 16px;
-    z-index: 999999;
-    width: 42px; height: 42px;
-    border-radius: 50%;
-    border: 2px solid rgba(79,163,255,0.5);
-    background: rgba(10,20,50,0.85);
-    cursor: pointer;
-    overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 14px rgba(0,60,180,0.35);
-    transition: border-color .2s, box-shadow .2s;
-    pointer-events: none; /* клік проходить крізь нас до collapsedControl під нами */
-}}
-#sp-avatar:hover {{
-    border-color: rgba(79,163,255,0.9);
-    box-shadow: 0 4px 20px rgba(0,80,220,0.55);
-}}
-</style>
-<div id="sp-avatar" title="Меню">{_avatar_html}</div>
-""", unsafe_allow_html=True)
+
 
 # ─── РЕЙТИНГ МАТЧУ ───────────────────────────────────────────────────────────
 def club_rating(name: str) -> int:
@@ -243,30 +199,34 @@ if to_cache:
         lc_bar.progress((i+1)/len(to_cache), text=f"Кэш лого: {i+1}/{len(to_cache)}")
     lc_bar.empty()
 
-# ─── SIDEBAR ─────────────────────────────────────────────────────────────────
-with st.sidebar:
-    if USER_AVATAR:
-        st.markdown(
-            '<div style="display:flex;align-items:center;gap:12px;padding:8px 0 16px">'
-            '<img src="' + USER_AVATAR + '" style="width:44px;height:44px;border-radius:50%;'
-            'border:2px solid rgba(79,163,255,0.4);flex-shrink:0">'
-            '<div>'
-            '<div style="font-size:.95em;font-weight:700;color:#dde6f5">' + USER_NAME + '</div>'
-            '<div style="font-size:.75em;color:#4a6080;margin-top:2px">' + USER_EMAIL + '</div>'
-            '</div></div>',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            '<div style="padding:8px 0 16px;color:#dde6f5;font-weight:700">' + USER_NAME + '</div>',
-            unsafe_allow_html=True,
-        )
-    st.divider()
-    if st.button("⚙  Настройки", key="open_cfg", use_container_width=True):
+# ─── TOPBAR (замість sidebar) ────────────────────────────────────────────────
+_avatar_img = (
+    f'<img src="{USER_AVATAR}" style="width:34px;height:34px;border-radius:50%;'
+    f'object-fit:cover;border:2px solid rgba(79,163,255,0.45);flex-shrink:0">'
+    if USER_AVATAR else
+    f'<div style="width:34px;height:34px;border-radius:50%;background:rgba(79,163,255,0.15);'
+    f'border:2px solid rgba(79,163,255,0.35);display:flex;align-items:center;'
+    f'justify-content:center;font-size:1em;flex-shrink:0">👤</div>'
+)
+st.markdown(
+    f'<div class="sp-topbar">'
+    f'  <div class="sp-topbar-left">'
+    f'    {_avatar_img}'
+    f'    <span class="sp-topbar-name">{USER_NAME}</span>'
+    f'  </div>'
+    f'  <div class="sp-topbar-right" id="sp-topbar-btns"></div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
+
+# Кнопки в topbar через st.columns щоб зберегти Streamlit-логіку
+_tb_spacer, _tb_cfg, _tb_out = st.columns([100, 1, 1])
+with _tb_cfg:
+    if st.button("⚙", key="open_cfg", help="Настройки"):
         st.session_state["_open_settings"] = True
         st.rerun()
-    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
-    if st.button("→  Выйти", key="logout_btn", use_container_width=True):
+with _tb_out:
+    if st.button("→", key="logout_btn", help="Выйти"):
         for k in ["user_email","user_name","user_avatar",
                   "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
             st.session_state.pop(k, None)

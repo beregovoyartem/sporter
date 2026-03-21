@@ -12,12 +12,41 @@ def get_css(dark: bool, BG: str, CLR: str, CLRS: str, CARD: str, SB: str) -> str
 html,body,[class*="css"]{{font-family:'Inter',sans-serif}}
 .stApp{{{BG}min-height:100vh}}
 #MainMenu,footer,header{{visibility:hidden}}
-/* Скидаємо всі login-стилі */
+/* Ховаємо sidebar і бургер повністю */
+section[data-testid="stSidebar"],
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"] {{display:none!important}}
+/* Скидаємо login-стилі + фікс зсуву контенту */
 .block-container{{padding-top:0!important;max-width:1500px!important;position:relative!important;min-height:unset!important;display:block!important;justify-content:unset!important;flex-direction:unset!important;margin-left:0!important;}}
-/* Фікс зсуву контенту коли sidebar collapsed */
-.stMain .stMainBlockContainer{{margin-left:0!important;padding-left:1rem!important;}}
-.stApp > .stAppViewContainer > section.stMain{{margin-left:0!important;}}
+section[data-testid="stMain"]{{margin-left:0!important;}}
 .lp-outer,.lp-title,.lp-sub,.lp-card,.lp-footer{{display:none!important}}
+
+/* ── Topbar ── */
+.sp-topbar{{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0 8px;margin-bottom:4px;
+  border-bottom:1px solid rgba(79,163,255,0.1);
+}}
+.sp-topbar-left{{display:flex;align-items:center;gap:10px;min-width:0}}
+.sp-topbar-name{{font-size:.88em;font-weight:600;color:{CLRS};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}}
+
+/* Кнопки topbar — мінімальні, іконочні */
+.sp-topbar + div[data-testid="stHorizontalBlock"] {{margin-top:-52px!important;float:right;width:auto!important;position:relative;z-index:10}}
+.sp-topbar + div[data-testid="stHorizontalBlock"] .stButton > button {{
+  background:rgba(79,163,255,0.07)!important;
+  color:#8ab4d8!important;
+  border:1px solid rgba(79,163,255,0.18)!important;
+  border-radius:8px!important;
+  height:34px!important;width:34px!important;min-width:34px!important;
+  padding:0!important;font-size:1em!important;
+  box-shadow:none!important;
+  transition:background .15s,border-color .15s!important;
+}}
+.sp-topbar + div[data-testid="stHorizontalBlock"] .stButton > button:hover {{
+  background:rgba(79,163,255,0.18)!important;
+  border-color:rgba(79,163,255,0.45)!important;
+  color:#dde6f5!important;
+}}
 
 .site-title{{
   font-family:'Pacifico',cursive;font-size:2.2em;font-weight:400;letter-spacing:.5px;
@@ -202,42 +231,7 @@ html,body,[class*="css"]{{font-family:'Inter',sans-serif}}
 div[data-testid="stTabs"] button{{font-size:.75em!important;font-weight:600!important;color:{CLRS}!important}}
 div[data-testid="stTabs"] button[aria-selected="true"]{{color:#4fa3ff!important}}
 
-/* ── Sidebar стилі ── */
-section[data-testid="stSidebar"]{{
-    background:rgba(6,12,30,0.97)!important;
-    border-right:1px solid rgba(79,163,255,0.12)!important;
-    min-width:260px!important;max-width:260px!important;
-}}
-section[data-testid="stSidebar"] .stButton > button{{
-    background:rgba(79,163,255,0.07)!important;
-    color:#8ab4d8!important;
-    border:1px solid rgba(79,163,255,0.15)!important;
-    border-radius:10px!important;
-    font-size:.88em!important;font-weight:600!important;
-    height:40px!important;
-    transition:background .15s,border-color .15s!important;
-    box-shadow:none!important;
-    width:100%!important;
-}}
-section[data-testid="stSidebar"] .stButton > button:hover{{
-    background:rgba(79,163,255,0.15)!important;
-    border-color:rgba(79,163,255,0.35)!important;
-    color:#dde6f5!important;
-}}
-
-/* Прибираємо зайвий відступ зверху в sidebar */
-section[data-testid="stSidebar"] > div:first-child{{
-    padding-top:16px!important;
-}}
-
 .stCheckbox label span{{font-size:.82em!important}}
-
-.hdr{{display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px;gap:12px}}
-.hdr-right{{display:flex;align-items:center;gap:10px;flex-shrink:0}}
-.hdr-clock{{font-size:.84em;font-weight:600;color:{CLRS};background:rgba(79,163,255,0.08);
-  padding:5px 14px;border-radius:20px;border:1px solid rgba(79,163,255,0.18);
-  text-align:right;line-height:1.5}}
-.hdr-clock b{{color:#4fa3ff}}
 
 [data-testid="stDialog"] > div > div{{
   background:rgba(8,15,36,0.97)!important;
@@ -247,11 +241,5 @@ section[data-testid="stSidebar"] > div:first-child{{
   max-width:860px!important;width:90vw!important;
 }}
 [data-testid="stDialog"] h3{{color:#dde6f5!important;font-size:1.1em!important}}
-
-/* Стандартний бургер прихований — використовується власна кнопка #sp-avatar */
-[data-testid="collapsedControl"] {{
-    opacity:0!important;pointer-events:none!important;
-    position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;
-}}
 </style>
 """
