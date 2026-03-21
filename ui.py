@@ -7,17 +7,15 @@ import urllib.parse
 import streamlit as st
 
 from config import FLAG_MAP, UCL_SVG, UEL_SVG, UECL_SVG, LEAGUE_POP, TZ_SITE
-from parsers import logo_uri, CACHE_DIR
 
 
-# ─── URI КЕШ ─────────────────────────────────────────────────────────────────
-_uri_cache: dict = {}
-
-def get_uri(url: str) -> str | None:
-    if not url: return None
-    if url not in _uri_cache:
-        _uri_cache[url] = logo_uri(url)
-    return _uri_cache[url]
+def lhtml(url: str) -> str:
+    """Рендерить логотип команди напряму з URL (без конвертації в base64)."""
+    if url:
+        return (f'<img src="{url}" loading="lazy" '
+                f'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+                f'<div class="tph" style="display:none">⚽</div>')
+    return '<div class="tph">⚽</div>'
 
 
 def league_badge_html(name: str) -> str:
@@ -272,29 +270,14 @@ def settings_modal(all_known_leagues: list, matches: list,
                 "active_leagues":   save_active,
             })
             st.cache_data.clear()
-            for f in os.listdir(CACHE_DIR):
-                fp = os.path.join(CACHE_DIR, f)
-                if os.path.isfile(fp):
-                    try: os.remove(fp)
-                    except: pass
             st.rerun()
     with _c2:
         if st.button("Обновить данные", use_container_width=True, key="m_ref"):
             st.cache_data.clear()
-            for f in os.listdir(CACHE_DIR):
-                fp = os.path.join(CACHE_DIR, f)
-                if os.path.isfile(fp):
-                    try: os.remove(fp)
-                    except: pass
             st.rerun()
     with _c3:
         if st.button("Сбросить кэш", use_container_width=True, key="m_cache"):
             st.cache_data.clear()
-            for f in os.listdir(CACHE_DIR):
-                fp = os.path.join(CACHE_DIR, f)
-                if os.path.isfile(fp):
-                    try: os.remove(fp)
-                    except: pass
             st.rerun()
 
     st.caption(
