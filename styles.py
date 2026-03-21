@@ -25,37 +25,47 @@ section[data-testid="stMain"]{{margin-left:0!important;}}
 /* Кнопки йдуть ПЕРЕД .sp-hdr — таргетуємо stHorizontalBlock що передує sp-hdr */
 div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) {{
     max-width:25%!important;
-    margin:10px auto 8px!important;
+    margin:10px auto 0!important;
     flex-direction:column!important;
-    gap:6px!important;
+    gap:0!important;
     padding:0!important;
+    border:1px solid rgba(79,163,255,0.15)!important;
+    border-radius:12px!important;
+    overflow:hidden!important;
 }}
 div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) > div[data-testid="stColumn"] {{
-    width:100%!important;flex:unset!important;min-width:0!important;padding:0 4px!important;
+    width:100%!important;flex:unset!important;min-width:0!important;padding:0!important;
+}}
+/* Девайдер між кнопками — права межа першої колонки */
+div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) > div[data-testid="stColumn"]:first-child {{
+    border-bottom:1px solid rgba(79,163,255,0.15)!important;
 }}
 div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button {{
-    background:rgba(79,163,255,0.07)!important;
+    background:rgba(79,163,255,0.05)!important;
     color:#8ab4d8!important;
-    border:1px solid rgba(79,163,255,0.18)!important;
-    border-radius:10px!important;
-    height:36px!important;
+    border:none!important;
+    border-radius:0!important;
+    height:40px!important;
     font-size:.82em!important;font-weight:600!important;
     letter-spacing:.3px!important;
     box-shadow:none!important;
     width:100%!important;
-    transition:background .15s,border-color .15s,color .15s!important;
+    transition:background .15s,color .15s!important;
 }}
 div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button:hover {{
-    background:rgba(79,163,255,0.16)!important;
-    border-color:rgba(79,163,255,0.42)!important;
+    background:rgba(79,163,255,0.14)!important;
     color:#dde6f5!important;
 }}
 
+/* Девайдер між блоком кнопок і аватаром */
 .sp-hdr {{
     display:flex;flex-direction:column;align-items:center;
-    padding:12px 0 0;gap:6px;
+    padding:18px 0 0;gap:6px;
     max-width:25%;
     margin:0 auto;
+    border-top:1px solid rgba(79,163,255,0.12)!important;
+    margin-top:12px!important;
+    padding-top:18px!important;
 }}
 /* Обгортка — жорсткий квадрат з overflow:hidden гарантує ідеальне коло */
 .sp-hdr-avatar-wrap {{
