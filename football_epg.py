@@ -84,16 +84,21 @@ SB   = "rgba(6,12,30,0.97)"  if DARK else "rgba(230,235,250,0.98)"
 
 st.markdown(get_css(DARK, BG, CLR, CLRS, CARD, SB), unsafe_allow_html=True)
 
-# Аватар на бургері — через inline CSS на collapsedControl
+# Аватар на бургері
 if USER_AVATAR:
     st.markdown(f"""
     <style>
     [data-testid="collapsedControl"] {{
-        background-image:url('{USER_AVATAR}')!important;
-        background-size:cover!important;
-        background-position:center!important;
+        background-image: url('{USER_AVATAR}') !important;
+        background-size: cover !important;
+        background-position: center !important;
+        border-radius: 50% !important;
+        border: 2px solid rgba(79,163,255,0.4) !important;
+        width: 36px !important;
+        height: 36px !important;
+        overflow: hidden !important;
     }}
-    [data-testid="collapsedControl"] svg {{ display:none!important; }}
+    [data-testid="collapsedControl"] svg {{ display: none !important; }}
     </style>
     """, unsafe_allow_html=True)
 

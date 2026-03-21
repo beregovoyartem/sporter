@@ -28,22 +28,32 @@ def render_login_page():
         min-height: 100vh;
     }
 
-    /* Центруємо контент вертикально */
+    /* Центруємо контент вертикально, без зайвого скролу */
     .block-container {
         max-width: 440px !important;
         padding: 0 20px !important;
         margin: 0 auto !important;
     }
     section[data-testid="stMain"] > div {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        min-height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
     }
-
-    /* Прибираємо всі gaps між елементами */
-    .block-container > div > div > div > div { margin: 0 !important; padding: 0 !important; }
-    /* iframe OAuth кнопки */
+    /* Прибираємо gaps між елементами Streamlit */
+    .block-container > div > div > div > div {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    /* Маленький відступ між карткою і кнопкою */
+    .block-container > div > div > div > div + div {
+        margin-top: 4px !important;
+    }
+    /* iframe OAuth кнопки — без відступу */
     .block-container iframe { display: block !important; margin: 0 !important; }
 
     @keyframes ts { 0% { background-position: 0% } 100% { background-position: 300% } }
