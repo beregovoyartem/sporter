@@ -44,14 +44,6 @@ USER_EMAIL  = _user["email"]
 USER_NAME   = _user["name"]
 USER_AVATAR = _user["avatar"]
 
-# Скидаємо стилі login-сторінки і ховаємо її HTML-залишки
-st.markdown("""
-<style>
-.block-container{max-width:1500px!important;padding-top:0!important;
-  min-height:unset!important;display:block!important;justify-content:unset!important;}
-.lp-outer,.lp-title,.lp-sub,.lp-card,.lp-footer{display:none!important}
-</style>
-""", unsafe_allow_html=True)
 
 # ─── ОЧИЩЕННЯ СТАРИХ КЕШІВ (> 5 хв) ─────────────────────────────────────────
 _now_ts = datetime.now().timestamp()

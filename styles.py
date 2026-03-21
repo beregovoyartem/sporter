@@ -13,7 +13,9 @@ def get_css(dark: bool, BG: str, CLR: str, CLRS: str, CARD: str, SB: str) -> str
 html,body,[class*="css"]{{font-family:'Inter',sans-serif}}
 .stApp{{{BG}min-height:100vh}}
 #MainMenu,footer,header{{visibility:hidden}}
-.block-container{{padding-top:0!important;max-width:1500px!important;position:relative!important;}}
+/* Скидаємо всі login-стилі */
+.block-container{{padding-top:0!important;max-width:1500px!important;position:relative!important;min-height:unset!important;display:block!important;justify-content:unset!important;flex-direction:unset!important;}}
+.lp-outer,.lp-title,.lp-sub,.lp-card,.lp-footer{{display:none!important}}
 
 .site-title{{
   font-family:'Pacifico',cursive;font-size:2.2em;font-weight:400;letter-spacing:.5px;
