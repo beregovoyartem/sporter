@@ -84,21 +84,28 @@ SB   = "rgba(6,12,30,0.97)"  if DARK else "rgba(230,235,250,0.98)"
 
 st.markdown(get_css(DARK, BG, CLR, CLRS, CARD, SB), unsafe_allow_html=True)
 
-# Власна плаваюча кнопка-аватар — надійніше за CSS-хак на collapsedControl
+# Власна плаваюча кнопка-аватар поверх прихованого стандартного бургера
 _avatar_html = (
     f'<img src="{USER_AVATAR}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">'
     if USER_AVATAR else '<span style="font-size:1.3em;color:#4fa3ff">☰</span>'
 )
 st.markdown(f"""
 <style>
-/* Ховаємо стандартний бургер Streamlit щоб не дублювався */
+/* Стандартний бургер — залишаємо в DOM і клікабельним, але невидимим.
+   Наш #sp-avatar лежить поверх нього і при кліку тригерить його. */
 [data-testid="collapsedControl"],
 [data-testid="stSidebarCollapsedControl"] {{
     opacity: 0 !important;
-    pointer-events: none !important;
-    position: absolute !important;
-    width: 1px !important; height: 1px !important;
-    overflow: hidden !important;
+    position: fixed !important;
+    top: 12px !important; right: 16px !important;
+    width: 42px !important; height: 42px !important;
+    z-index: 1000000 !important;
+    cursor: pointer !important;
+}}
+/* Фікс зсуву контенту вліво коли sidebar collapsed */
+.stMainBlockContainer, section[data-testid="stMain"] > div > div {{
+    margin-left: 0 !important;
+    padding-left: 1rem !important;
 }}
 #sp-avatar {{
     position: fixed;
@@ -113,6 +120,7 @@ st.markdown(f"""
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 2px 14px rgba(0,60,180,0.35);
     transition: border-color .2s, box-shadow .2s;
+    pointer-events: none; /* клік проходить крізь нас до collapsedControl під нами */
 }}
 #sp-avatar:hover {{
     border-color: rgba(79,163,255,0.9);
@@ -120,26 +128,6 @@ st.markdown(f"""
 }}
 </style>
 <div id="sp-avatar" title="Меню">{_avatar_html}</div>
-<script>
-(function() {{
-    document.getElementById('sp-avatar').addEventListener('click', function() {{
-        var selectors = [
-            '[data-testid="collapsedControl"]',
-            '[data-testid="stSidebarCollapsedControl"]',
-            'button[aria-label="Open sidebar"]',
-            'button[aria-label="открыть боковую панель"]',
-            'button[title="Open sidebar"]',
-        ];
-        for (var i = 0; i < selectors.length; i++) {{
-            var el = document.querySelector(selectors[i]);
-            if (el) {{ el.click(); return; }}
-        }}
-        // запасний: шукаємо кнопку з aria-expanded
-        var btns = document.querySelectorAll('button[aria-expanded]');
-        if (btns.length) {{ btns[0].click(); }}
-    }});
-}})();
-</script>
 """, unsafe_allow_html=True)
 
 # ─── РЕЙТИНГ МАТЧУ ───────────────────────────────────────────────────────────

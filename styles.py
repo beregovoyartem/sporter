@@ -13,7 +13,10 @@ html,body,[class*="css"]{{font-family:'Inter',sans-serif}}
 .stApp{{{BG}min-height:100vh}}
 #MainMenu,footer,header{{visibility:hidden}}
 /* Скидаємо всі login-стилі */
-.block-container{{padding-top:0!important;max-width:1500px!important;position:relative!important;min-height:unset!important;display:block!important;justify-content:unset!important;flex-direction:unset!important;}}
+.block-container{{padding-top:0!important;max-width:1500px!important;position:relative!important;min-height:unset!important;display:block!important;justify-content:unset!important;flex-direction:unset!important;margin-left:0!important;}}
+/* Фікс зсуву контенту коли sidebar collapsed */
+.stMain .stMainBlockContainer{{margin-left:0!important;padding-left:1rem!important;}}
+.stApp > .stAppViewContainer > section.stMain{{margin-left:0!important;}}
 .lp-outer,.lp-title,.lp-sub,.lp-card,.lp-footer{{display:none!important}}
 
 .site-title{{
