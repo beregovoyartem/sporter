@@ -200,20 +200,7 @@ if to_cache:
     lc_bar.empty()
 
 # ─── HEADER ──────────────────────────────────────────────────────────────────
-_avatar_src = USER_AVATAR or ""
-_avatar_block = (
-    f'<img src="{_avatar_src}" class="sp-hdr-avatar">'
-    if _avatar_src else
-    '<div class="sp-hdr-avatar sp-hdr-avatar-ph">👤</div>'
-)
-st.markdown(
-    f'<div class="sp-hdr">'
-    f'  {_avatar_block}'
-    f'  <div class="site-title">Sporter</div>'
-    f'  <div class="sp-hdr-btns" id="sp-hdr-btns-slot"></div>'
-    f'</div>',
-    unsafe_allow_html=True,
-)
+# Спочатку кнопки (зверху), потім аватар + лого
 
 _bcol1, _bcol2 = st.columns([1, 1])
 with _bcol1:
@@ -227,7 +214,21 @@ with _bcol2:
             st.session_state.pop(k, None)
         st.rerun()
 
-st.markdown('<div class="sp-hdr-sep"></div>', unsafe_allow_html=True)
+_avatar_src = USER_AVATAR or ""
+_avatar_block = (
+    f'<div class="sp-hdr-avatar-wrap">'
+    f'  <img src="{_avatar_src}" class="sp-hdr-avatar">'
+    f'</div>'
+    if _avatar_src else
+    '<div class="sp-hdr-avatar-wrap sp-hdr-avatar-ph">👤</div>'
+)
+st.markdown(
+    f'<div class="sp-hdr">'
+    f'  {_avatar_block}'
+    f'  <div class="site-title">Sporter</div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 if st.session_state.pop("_open_settings", False):
     settings_modal(

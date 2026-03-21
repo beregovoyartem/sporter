@@ -21,50 +21,19 @@ section[data-testid="stSidebar"],
 section[data-testid="stMain"]{{margin-left:0!important;}}
 .lp-outer,.lp-title,.lp-sub,.lp-card,.lp-footer{{display:none!important}}
 
-/* ── Header: аватар по центру → лого → кнопки в рядок ── */
-.sp-hdr {{
-    display:flex;flex-direction:column;align-items:center;
-    padding:18px 0 0;gap:6px;
+/* ── Header ── */
+/* Кнопки йдуть ПЕРЕД .sp-hdr — таргетуємо stHorizontalBlock що передує sp-hdr */
+div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) {{
     max-width:25%!important;
-    margin:0 auto!important;
-}}
-.sp-hdr-avatar {{
-    width:128px;height:128px;border-radius:50%;object-fit:cover;
-    border:2px solid rgba(79,163,255,0.5);
-    box-shadow:0 2px 16px rgba(0,60,180,0.3);
-    display:block;
-}}
-.sp-hdr-avatar-ph {{
-    width:128px;height:128px;border-radius:50%;
-    background:rgba(79,163,255,0.1);border:2px solid rgba(79,163,255,0.3);
-    display:flex;align-items:center;justify-content:center;font-size:3em;
-}}
-/* site-title всередині sp-hdr — центруємо, більше висоти */
-.sp-hdr .site-title {{
-    text-align:center;
-    padding:8px 0 10px;
-    font-size:3.3em!important;
-    line-height:1.5!important;
-    overflow:visible!important;
-}}
-.sp-hdr-sep {{
-    width:100%;height:1px;background:rgba(79,163,255,0.1);margin:4px 0 10px;
-}}
-/* Кнопки — стовпчик одна під одною, вузький контейнер */
-.sp-hdr + div[data-testid="stHorizontalBlock"] {{
-    max-width:25%!important;
-    margin:0 auto 14px!important;
+    margin:10px auto 8px!important;
     flex-direction:column!important;
     gap:6px!important;
     padding:0!important;
 }}
-.sp-hdr + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
-    width:100%!important;
-    flex:unset!important;
-    min-width:0!important;
-    padding:0 4px!important;
+div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) > div[data-testid="stColumn"] {{
+    width:100%!important;flex:unset!important;min-width:0!important;padding:0 4px!important;
 }}
-.sp-hdr + div[data-testid="stHorizontalBlock"] .stButton > button {{
+div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button {{
     background:rgba(79,163,255,0.07)!important;
     color:#8ab4d8!important;
     border:1px solid rgba(79,163,255,0.18)!important;
@@ -76,12 +45,64 @@ section[data-testid="stMain"]{{margin-left:0!important;}}
     width:100%!important;
     transition:background .15s,border-color .15s,color .15s!important;
 }}
-.sp-hdr + div[data-testid="stHorizontalBlock"] .stButton > button:hover {{
+div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button:hover {{
     background:rgba(79,163,255,0.16)!important;
     border-color:rgba(79,163,255,0.42)!important;
     color:#dde6f5!important;
 }}
 
+.sp-hdr {{
+    display:flex;flex-direction:column;align-items:center;
+    padding:12px 0 0;gap:6px;
+    max-width:25%;
+    margin:0 auto;
+}}
+/* Обгортка — жорсткий квадрат з overflow:hidden гарантує ідеальне коло */
+.sp-hdr-avatar-wrap {{
+    width:128px;height:128px;
+    border-radius:50%;
+    overflow:hidden;
+    border:2px solid rgba(79,163,255,0.5);
+    box-shadow:0 2px 16px rgba(0,60,180,0.3);
+    flex-shrink:0;
+}}
+.sp-hdr-avatar {{
+    width:100%;height:100%;
+    object-fit:cover;
+    display:block;
+    border-radius:0;
+}}
+.sp-hdr-avatar-ph {{
+    width:128px;height:128px;border-radius:50%;
+    background:rgba(79,163,255,0.1);border:2px solid rgba(79,163,255,0.3);
+    display:flex;align-items:center;justify-content:center;font-size:3em;flex-shrink:0;
+}}
+.sp-hdr .site-title {{
+    text-align:center;
+    padding:8px 0 10px;
+    font-size:3.3em!important;
+    line-height:1.5!important;
+    overflow:visible!important;
+}}
+
+/* Фолбек якщо :has() не підтримується — старий селектор */
+.sp-hdr + div[data-testid="stHorizontalBlock"] {{
+    max-width:25%!important;
+    margin:0 auto 14px!important;
+    flex-direction:column!important;
+    gap:6px!important;
+    padding:0!important;
+}}
+.sp-hdr + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+    width:100%!important;flex:unset!important;min-width:0!important;padding:0 4px!important;
+}}
+.sp-hdr + div[data-testid="stHorizontalBlock"] .stButton > button {{
+    background:rgba(79,163,255,0.07)!important;color:#8ab4d8!important;
+    border:1px solid rgba(79,163,255,0.18)!important;border-radius:10px!important;
+    height:36px!important;font-size:.82em!important;font-weight:600!important;
+    box-shadow:none!important;width:100%!important;
+    transition:background .15s,border-color .15s,color .15s!important;
+}}
 .site-title{{
   font-family:'Pacifico',cursive;font-size:2.2em;font-weight:400;letter-spacing:.5px;
   display:block;
