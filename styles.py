@@ -3,7 +3,6 @@ styles.py — CSS для застосунку Sporter.
 Єдина функція get_css(dark, clr, clrs, card, sb) → рядок стилів.
 """
 
-
 def get_css(dark: bool, BG: str, CLR: str, CLRS: str, CARD: str, SB: str) -> str:
     """Повертає повний CSS застосунку."""
     return f"""
@@ -206,10 +205,6 @@ section[data-testid="stSidebar"]{{
     border-right:1px solid rgba(79,163,255,0.12)!important;
     min-width:260px!important;max-width:260px!important;
 }}
-/* Прибираємо зсув контенту коли sidebar collapsed */
-section[data-testid="stSidebar"][aria-expanded="false"]{{
-    margin-left:-260px!important;
-}}
 section[data-testid="stSidebar"] .stButton > button{{
     background:rgba(79,163,255,0.07)!important;
     color:#8ab4d8!important;
@@ -226,13 +221,7 @@ section[data-testid="stSidebar"] .stButton > button:hover{{
     border-color:rgba(79,163,255,0.35)!important;
     color:#dde6f5!important;
 }}
-[data-testid="collapsedControl"] svg{{
-    fill:rgba(79,163,255,0.8)!important;
-    color:rgba(79,163,255,0.8)!important;
-}}
-[data-testid="collapsedControl"]:hover svg{{
-    fill:#4fa3ff!important;color:#4fa3ff!important;
-}}
+
 /* Прибираємо зайвий відступ зверху в sidebar */
 section[data-testid="stSidebar"] > div:first-child{{
     padding-top:16px!important;
@@ -255,27 +244,32 @@ section[data-testid="stSidebar"] > div:first-child{{
   max-width:860px!important;width:90vw!important;
 }}
 [data-testid="stDialog"] h3{{color:#dde6f5!important;font-size:1.1em!important}}
-[data-testid="collapsedControl"]:hover {{
-    border-color:rgba(79,163,255,0.8)!important;
-    background:rgba(20,40,90,0.9)!important;
-}}
-[data-testid="collapsedControl"] svg {{
-    width:18px!important;height:18px!important;
-    fill:rgba(79,163,255,0.9)!important;
-}}
-/* ── Бургер (collapsedControl) ── */
+
+
+/* ── Бургер — кнопка відкриття sidebar ── */
 [data-testid="collapsedControl"]{{
     display:flex!important;
     visibility:visible!important;
     opacity:1!important;
+    background:rgba(10,20,50,0.7)!important;
+    border:2px solid rgba(79,163,255,0.35)!important;
+    border-radius:50%!important;
+    width:38px!important;
+    height:38px!important;
+    align-items:center!important;
+    justify-content:center!important;
+    cursor:pointer!important;
+    transition:border-color .2s!important;
+}}
+[data-testid="collapsedControl"]:hover{{
+    border-color:rgba(79,163,255,0.75)!important;
+    background:rgba(20,40,90,0.9)!important;
 }}
 [data-testid="collapsedControl"] svg{{
-    fill:rgba(79,163,255,0.85)!important;
-    color:rgba(79,163,255,0.85)!important;
-}}
-[data-testid="collapsedControl"]:hover svg{{
+    display:block!important;
+    width:16px!important;
+    height:16px!important;
     fill:#4fa3ff!important;
 }}
-
 </style>
 """

@@ -84,23 +84,19 @@ SB   = "rgba(6,12,30,0.97)"  if DARK else "rgba(230,235,250,0.98)"
 
 st.markdown(get_css(DARK, BG, CLR, CLRS, CARD, SB), unsafe_allow_html=True)
 
-# Аватар на бургері
+# Аватар на бургері — накладаємо фото поверх стандартної кнопки
 if USER_AVATAR:
-    st.markdown(f"""
-    <style>
-    [data-testid="collapsedControl"] {{
-        background-image: url('{USER_AVATAR}') !important;
-        background-size: cover !important;
-        background-position: center !important;
-        border-radius: 50% !important;
-        border: 2px solid rgba(79,163,255,0.4) !important;
-        width: 36px !important;
-        height: 36px !important;
-        overflow: hidden !important;
-    }}
-    [data-testid="collapsedControl"] svg {{ display: none !important; }}
-    </style>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<style>' 
+        f'[data-testid="collapsedControl"]{{' 
+        f'background-image:url("{USER_AVATAR}")!important;' 
+        f'background-size:cover!important;' 
+        f'background-position:center!important;' 
+        f'border-color:rgba(79,163,255,0.5)!important;}}' 
+        f'[data-testid="collapsedControl"] svg{{display:none!important;}}' 
+        f'</style>',
+        unsafe_allow_html=True,
+    )
 
 # ─── РЕЙТИНГ МАТЧУ ───────────────────────────────────────────────────────────
 def club_rating(name: str) -> int:
