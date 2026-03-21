@@ -25,33 +25,43 @@ section[data-testid="stMain"]{{margin-left:0!important;}}
 .sp-hdr {{
     display:flex;flex-direction:column;align-items:center;
     padding:18px 0 0;gap:6px;
+    max-width:25%!important;
+    margin:0 auto!important;
 }}
 .sp-hdr-avatar {{
-    width:64px;height:64px;border-radius:50%;object-fit:cover;
+    width:128px;height:128px;border-radius:50%;object-fit:cover;
     border:2px solid rgba(79,163,255,0.5);
     box-shadow:0 2px 16px rgba(0,60,180,0.3);
     display:block;
 }}
 .sp-hdr-avatar-ph {{
-    width:64px;height:64px;border-radius:50%;
+    width:128px;height:128px;border-radius:50%;
     background:rgba(79,163,255,0.1);border:2px solid rgba(79,163,255,0.3);
-    display:flex;align-items:center;justify-content:center;font-size:1.6em;
+    display:flex;align-items:center;justify-content:center;font-size:3em;
 }}
-/* site-title всередині sp-hdr — центруємо */
+/* site-title всередині sp-hdr — центруємо, більше висоти */
 .sp-hdr .site-title {{
-    text-align:center;padding:2px 0 4px;
+    text-align:center;
+    padding:8px 0 10px;
+    font-size:3.3em!important;
+    line-height:1.5!important;
+    overflow:visible!important;
 }}
 .sp-hdr-sep {{
     width:100%;height:1px;background:rgba(79,163,255,0.1);margin:4px 0 10px;
 }}
-/* Кнопки — рядок з двох колонок одразу після sp-hdr */
+/* Кнопки — стовпчик одна під одною, вузький контейнер */
 .sp-hdr + div[data-testid="stHorizontalBlock"] {{
-    max-width:320px!important;
+    max-width:25%!important;
     margin:0 auto 14px!important;
-    gap:8px!important;
+    flex-direction:column!important;
+    gap:6px!important;
     padding:0!important;
 }}
 .sp-hdr + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+    width:100%!important;
+    flex:unset!important;
+    min-width:0!important;
     padding:0 4px!important;
 }}
 .sp-hdr + div[data-testid="stHorizontalBlock"] .stButton > button {{
