@@ -240,6 +240,13 @@ def run_matches():
         except Exception:
             pass
 
+        # Логотипи
+        t1_logo = t2_logo = None
+        if eid in logo_map:
+            t1_raw, t2_raw = logo_map[eid]
+            t1_logo = _logo_storage_cache.get(t1_raw, t1_raw) if t1_raw else None
+            t2_logo = _logo_storage_cache.get(t2_raw, t2_raw) if t2_raw else None
+
         row = {
             "event_id":    eid,
             "time":        m.get("time", now),
@@ -251,24 +258,26 @@ def run_matches():
             "status":      m.get("status", "upcoming"),
             "score":       m.get("score"),
             "url":         m.get("url", ""),
+            "t1_logo":     t1_logo,
+            "t2_logo":     t2_logo,
             "is_top":      bool(m.get("is_top", False)),
             "always_show": bool(m.get("always_show", False)),
             "gooool_url":  gurl,
             "updated_at":  now,
         }
 
-        # Логотипи — тільки якщо щойно отримали нові
-        if eid in logo_map:
-            t1_raw, t2_raw = logo_map[eid]
-            t1 = _logo_storage_cache.get(t1_raw, t1_raw) if t1_raw else None
-            t2 = _logo_storage_cache.get(t2_raw, t2_raw) if t2_raw else None
-            if t1: row["t1_logo"] = t1
-            if t2: row["t2_logo"] = t2
-
         rows.append(row)
 
     print(f"  Зберігаємо {len(rows)} матчів в Supabase...", flush=True)
-    sb_upsert("matches", rows)
+    # Розбиваємо на два батчи: з логотипами і без
+    # Щоб не затерти існуючі логотипи NULL'ом
+    rows_with_logos    = [r for r in rows if r.get("t1_logo")]
+    rows_without_logos = [{k: v for k, v in r.items() if k not in ("t1_logo", "t2_logo")}
+                          for r in rows if not r.get("t1_logo")]
+    if rows_with_logos:
+        sb_upsert("matches", rows_with_logos)
+    if rows_without_logos:
+        sb_upsert("matches", rows_without_logos)
 
     leagues = sorted(set(m.get("league","") for m in all_matches if m.get("league")))
     _update_global_leagues(leagues)
