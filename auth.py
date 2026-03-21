@@ -95,6 +95,10 @@ def render_login_page():
     .lp-divider::before,.lp-divider::after{content:'';flex:1;height:1px;background:rgba(79,163,255,0.12);}
 
     /* Кнопка OAuth склеєна з карткою знизу */
+    /* Прибираємо відступ Streamlit між карткою і кнопкою */
+    .block-container > div > div > div > div:has(.stButton) {
+        margin-top:-1rem!important;
+    }
     .stButton > button{
         width:100%!important;
         background:#ffffff!important;color:#3c4043!important;

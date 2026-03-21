@@ -199,30 +199,27 @@ if to_cache:
 
 # ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
-    # Аватар + ім'я
     if USER_AVATAR:
         st.markdown(
-            f'<div style="display:flex;align-items:center;gap:12px;padding:8px 0 16px">'
-            f'<img src="{USER_AVATAR}" style="width:44px;height:44px;border-radius:50%;'
-            f'border:2px solid rgba(79,163,255,0.4);flex-shrink:0">'
-            f'<div>'
-            f'<div style="font-size:.95em;font-weight:700;color:#dde6f5">{USER_NAME}</div>'
-            f'<div style="font-size:.75em;color:#4a6080;margin-top:2px">{USER_EMAIL}</div>'
-            f'</div></div>',
+            '<div style="display:flex;align-items:center;gap:12px;padding:8px 0 16px">'
+            '<img src="' + USER_AVATAR + '" style="width:44px;height:44px;border-radius:50%;'
+            'border:2px solid rgba(79,163,255,0.4);flex-shrink:0">'
+            '<div>'
+            '<div style="font-size:.95em;font-weight:700;color:#dde6f5">' + USER_NAME + '</div>'
+            '<div style="font-size:.75em;color:#4a6080;margin-top:2px">' + USER_EMAIL + '</div>'
+            '</div></div>',
             unsafe_allow_html=True,
         )
     else:
-        st.markdown(f'<div style="padding:8px 0 16px;color:#dde6f5;font-weight:700">{USER_NAME}</div>',
-                    unsafe_allow_html=True)
-
+        st.markdown(
+            '<div style="padding:8px 0 16px;color:#dde6f5;font-weight:700">' + USER_NAME + '</div>',
+            unsafe_allow_html=True,
+        )
     st.divider()
-
     if st.button("⚙  Настройки", key="open_cfg", use_container_width=True):
         st.session_state["_open_settings"] = True
         st.rerun()
-
-    st.markdown("<div style='flex:1'></div>", unsafe_allow_html=True)
-
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
     if st.button("→  Выйти", key="logout_btn", use_container_width=True):
         for k in ["user_email","user_name","user_avatar",
                   "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
@@ -238,6 +235,37 @@ if st.session_state.pop("_open_settings", False):
         SHOW_INTERESTING=SHOW_INTERESTING, BOOST_UKRAINE=BOOST_UKRAINE,
         ACTIVE_LGS=ACTIVE_LGS,
     )
+
+# ─── HEADER ───────────────────────────────────────────────────────────────────
+_hdr_col1, _hdr_col2 = st.columns([10, 1])
+with _hdr_col1:
+    st.markdown(
+        '<div class="site-title" style="padding:14px 0 10px;overflow:visible">Sporter</div>',
+        unsafe_allow_html=True,
+    )
+with _hdr_col2:
+    _av_onclick = (
+        "var b=window.parent.document.querySelector('[data-testid=\"collapsedControl\"]');"
+        "if(b)b.click()"
+    )
+    if USER_AVATAR:
+        _av_tag = (
+            '<div style="display:flex;justify-content:flex-end;padding-top:12px">'
+            '<img src="' + USER_AVATAR + '" '
+            'style="width:38px;height:38px;border-radius:50%;cursor:pointer;'
+            'border:2px solid rgba(79,163,255,0.4);object-fit:cover;'
+            'box-shadow:0 2px 12px rgba(0,60,180,0.3)" '
+            'onclick="' + _av_onclick + '" '
+            'title="Меню"></div>'
+        )
+    else:
+        _av_tag = (
+            '<div style="display:flex;justify-content:flex-end;padding-top:12px">'
+            '<span style="font-size:1.5em;cursor:pointer;opacity:.7" '
+            'onclick="' + _av_onclick + '">👤</span></div>'
+        )
+    st.markdown(_av_tag, unsafe_allow_html=True)
+
 
 # ─── HEADER (тільки лого) ─────────────────────────────────────────────────────
 st.markdown(
