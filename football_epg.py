@@ -27,13 +27,8 @@ from config  import (TZ_SITE, TOP_CLUBS, YOUTH_KEYWORDS, UKR_TEAM_KW,
                      UKR_BOOST_LEAGUES, LEAGUE_POP)
 from db      import load_cfg, save_cfg, load_known_leagues, save_known_leagues, save_global_leagues
 from styles  import get_css
-from parsers import (
-    load_livetv, load_livetv_live, load_gooool_urls,
-    find_gooool, fetch_event_page, fetch_score_from_gooool,
-    logo_uri, logo_path, CACHE_DIR,
-)
-from ui    import render_card, build_top_section, settings_modal, league_sort_key
-from admin import render_admin_page, is_admin
+from ui      import render_card, build_top_section, settings_modal, league_sort_key
+from admin   import render_admin_page, is_admin
 
 # ─── АВТОРИЗАЦІЯ ─────────────────────────────────────────────────────────────
 _user = get_current_user()
@@ -45,16 +40,6 @@ USER_EMAIL  = _user["email"]
 USER_NAME   = _user["name"]
 USER_AVATAR = _user["avatar"]
 
-
-# ─── ОЧИЩЕННЯ СТАРИХ КЕШІВ (> 5 хв) ─────────────────────────────────────────
-_now_ts = datetime.now().timestamp()
-for _f in os.listdir(CACHE_DIR):
-    if _f.startswith(("ep2_", "ltv_live_", "ltv10_")):
-        _fp = os.path.join(CACHE_DIR, _f)
-        try:
-            if _now_ts - os.path.getmtime(_fp) > 300:
-                os.remove(_fp)
-        except: pass
 
 # ─── НАЛАШТУВАННЯ ────────────────────────────────────────────────────────────
 CFG              = load_cfg(USER_EMAIL)
@@ -102,46 +87,42 @@ def match_interest_score(team1: str, team2: str, league: str = "") -> int:
             base = max(base, 3)
     return base
 
-# ─── ЗАВАНТАЖЕННЯ ДАНИХ ──────────────────────────────────────────────────────
-pb = st.progress(0, text="Загрузка livetv.sx...")
-ltv             = load_livetv()
-pb.progress(40, text="Live матчи...")
-live_data       = load_livetv_live()
-live_ids_set    = set(live_data.get("ids", []))
-live_scores_map = live_data.get("scores", {})
-pb.progress(55, text="gooool365...")
-glist = load_gooool_urls()
-pb.progress(85, text="Обработка...")
+# ─── ЗАВАНТАЖЕННЯ ДАНИХ З SUPABASE ───────────────────────────────────────────
+pb = st.progress(0, text="Загрузка матчей...")
+
+@st.cache_data(ttl=120)
+def _load_matches_from_db() -> list:
+    """Читає матчі з Supabase таблиці matches."""
+    try:
+        from supabase import create_client
+        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        # Завантажуємо матчі за останні 2 дні і наступні 7 днів
+        from datetime import timezone
+        now_utc = datetime.now(timezone.utc)
+        date_from = (now_utc - timedelta(days=2)).isoformat()
+        date_to   = (now_utc + timedelta(days=7)).isoformat()
+        res = sb.table("matches") \
+            .select("*") \
+            .gte("time", date_from) \
+            .lte("time", date_to) \
+            .order("time") \
+            .execute()
+        return res.data or []
+    except Exception as e:
+        print(f"DB load error: {e}", flush=True)
+        return []
+
+raw_matches = _load_matches_from_db()
+pb.progress(70, text="Обработка...")
 
 now = datetime.utcnow() + timedelta(hours=TZ)
 
-# ─── ОНОВЛЕННЯ LIVE-СТАТУСІВ ─────────────────────────────────────────────────
-seen_ids: set = set()
-combined: list = []
-for m in ltv["top"] + ltv["all"]:
-    if m["event_id"] in seen_ids: continue
-    seen_ids.add(m["event_id"])
-    eid = m["event_id"]
-    if eid in live_ids_set:
-        try:
-            match_dt = datetime.fromisoformat(m["time"])
-            minutes_since = (datetime.now() - match_dt).total_seconds() / 60
-            if -2 <= minutes_since <= 140:
-                m = dict(m)
-                m["status"] = "live"
-                if eid in live_scores_map:
-                    m["score"] = live_scores_map[eid]
-        except: pass
-    combined.append(m)
-
-# ─── ЛІГИ (накопичені + поточні) ─────────────────────────────────────────────
-all_known_leagues_current = set(m["league"] for m in combined)
+# ─── ЛІГИ ────────────────────────────────────────────────────────────────────
+all_known_leagues_current = set(m["league"] for m in raw_matches if m.get("league"))
 _saved_leagues            = load_known_leagues(USER_EMAIL)
 all_known_leagues_merged  = all_known_leagues_current | _saved_leagues
 if all_known_leagues_current - _saved_leagues:
     save_known_leagues(USER_EMAIL, all_known_leagues_merged)
-# Поповнюємо глобальний список ліг з парсингу
-save_global_leagues(all_known_leagues_current)
 all_known_leagues = sorted(all_known_leagues_merged, key=league_sort_key)
 
 # ─── ФІЛЬТРАЦІЯ МАТЧІВ ───────────────────────────────────────────────────────
@@ -149,58 +130,43 @@ def league_allowed(lg: str) -> bool:
     return True if not ACTIVE_LGS else lg in ACTIVE_LGS
 
 matches: list = []
-for gm in combined:
+for gm in raw_matches:
     try:
-        dt = datetime.fromisoformat(gm["time"])
-        dt = dt + timedelta(hours=TZ - TZ_SITE)
-    except: continue
-    gurl         = find_gooool(gm["team1"], gm["team2"], glist)
-    i_score      = match_interest_score(gm["team1"], gm["team2"], gm.get("league","")) if SHOW_INTERESTING else 0
+        # Час з БД вже в UTC — конвертуємо в часовий пояс юзера
+        time_str = gm["time"]
+        if time_str.endswith("+00:00") or time_str.endswith("Z"):
+            dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+            dt = dt.replace(tzinfo=None) + timedelta(hours=TZ)
+        else:
+            dt = datetime.fromisoformat(time_str) + timedelta(hours=TZ - TZ_SITE)
+    except:
+        continue
+
+    league = gm.get("league", "")
+    if not league_allowed(league):
+        continue
+
+    i_score      = match_interest_score(gm.get("team1",""), gm.get("team2",""), league) if SHOW_INTERESTING else 0
     is_top_final = gm.get("is_top") or (i_score > 0)
-    if not league_allowed(gm["league"]): continue
-    user_selected = bool(ACTIVE_LGS) and gm["league"] in ACTIVE_LGS
-    if not gurl and not gm.get("always_show") and not is_top_final and not user_selected: continue
-    matches.append({**gm, "time_dt": dt, "gooool_url": gurl,
-                    "is_top": is_top_final, "interest": i_score})
+    user_selected = bool(ACTIVE_LGS) and league in ACTIVE_LGS
+    gurl = gm.get("gooool_url")
+
+    if not gurl and not gm.get("always_show") and not is_top_final and not user_selected:
+        continue
+
+    matches.append({
+        **gm,
+        "time_dt":    dt,
+        "gooool_url": gurl,
+        "is_top":     is_top_final,
+        "interest":   i_score,
+        "score":      gm.get("score") if gm.get("status") != "upcoming" else None,
+    })
 
 matches.sort(key=lambda x: x["time_dt"])
-for m in matches:
-    if m["status"] == "upcoming":
-        m["score"] = None
 
 pb.progress(100, text="Готово!")
 pb.empty()
-
-# ─── РАХУНОК + ЛОГОТИПИ ──────────────────────────────────────────────────────
-need_page = [m for m in matches if
-    (SHOW_SCORE and m["status"] in ("live","finished") and not m.get("score")) or
-    (not m.get("t1_logo") or not m.get("t2_logo"))]
-
-if need_page:
-    ev_bar = st.progress(0, text=f"Детали: 0/{min(len(need_page),50)}")
-    for i, m in enumerate(need_page[:50]):
-        data = fetch_event_page(m["event_id"], m["url"], m["status"])
-        if SHOW_SCORE and m["status"] in ("live","finished") and not m.get("score") and data.get("score"):
-            m["score"] = data["score"]
-        if SHOW_SCORE and m["status"] == "live" and not m.get("score") and m.get("gooool_url"):
-            gscore = fetch_score_from_gooool(m["gooool_url"])
-            if gscore: m["score"] = gscore
-        if not m.get("t1_logo") and data.get("t1"): m["t1_logo"] = data["t1"]
-        if not m.get("t2_logo") and data.get("t2"): m["t2_logo"] = data["t2"]
-        ev_bar.progress((i+1)/min(len(need_page),50), text=f"Детали: {i+1}/{min(len(need_page),50)}")
-    ev_bar.empty()
-
-# ─── КЕШ ЛОГОТИПІВ НА ДИСК ───────────────────────────────────────────────────
-to_cache = [m for m in matches if
-    (m.get("t1_logo") and not os.path.exists(logo_path(m["t1_logo"]))) or
-    (m.get("t2_logo") and not os.path.exists(logo_path(m["t2_logo"])))]
-if to_cache:
-    lc_bar = st.progress(0, text=f"Кэш лого: 0/{len(to_cache)}")
-    for i, m in enumerate(to_cache):
-        if m.get("t1_logo"): logo_uri(m["t1_logo"])
-        if m.get("t2_logo"): logo_uri(m["t2_logo"])
-        lc_bar.progress((i+1)/len(to_cache), text=f"Кэш лого: {i+1}/{len(to_cache)}")
-    lc_bar.empty()
 
 # ─── HEADER ──────────────────────────────────────────────────────────────────
 # Спочатку кнопки (зверху), потім аватар + лого
