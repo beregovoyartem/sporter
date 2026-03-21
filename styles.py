@@ -59,30 +59,41 @@ div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button:hover
 }}
 /* Обгортка — жорсткий квадрат з overflow:hidden гарантує ідеальне коло */
 .sp-hdr-avatar-wrap {{
-    width:128px;height:128px;
+    width:128px;
+    height:128px;
+    min-width:128px;
+    min-height:128px;
     border-radius:50%;
     overflow:hidden;
     border:2px solid rgba(79,163,255,0.5);
     box-shadow:0 2px 16px rgba(0,60,180,0.3);
     flex-shrink:0;
+    position:relative;
+    background:#0a1432;
 }}
 .sp-hdr-avatar {{
+    position:absolute;
+    top:0;left:0;
     width:100%;height:100%;
     object-fit:cover;
+    object-position:center top;
     display:block;
     border-radius:0;
 }}
 .sp-hdr-avatar-ph {{
-    width:128px;height:128px;border-radius:50%;
+    width:128px;height:128px;min-width:128px;min-height:128px;border-radius:50%;
     background:rgba(79,163,255,0.1);border:2px solid rgba(79,163,255,0.3);
     display:flex;align-items:center;justify-content:center;font-size:3em;flex-shrink:0;
 }}
 .sp-hdr .site-title {{
     text-align:center;
-    padding:8px 0 10px;
+    padding:10px 4px 16px;
     font-size:3.3em!important;
-    line-height:1.5!important;
+    line-height:1.6!important;
     overflow:visible!important;
+    display:block!important;
+    -webkit-background-clip:text!important;
+    -webkit-text-fill-color:transparent!important;
 }}
 
 /* Фолбек якщо :has() не підтримується — старий селектор */

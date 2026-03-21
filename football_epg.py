@@ -215,6 +215,12 @@ with _bcol2:
         st.rerun()
 
 _avatar_src = USER_AVATAR or ""
+# Google фото: замінюємо розмір на більший щоб не пікселилось і не обрізалось
+if _avatar_src and "googleusercontent.com" in _avatar_src:
+    import re as _re
+    _avatar_src = _re.sub(r'=s\d+-c', '=s256-c', _avatar_src)
+    if "=s" not in _avatar_src:
+        _avatar_src = _avatar_src + "=s256-c"
 _avatar_block = (
     f'<div class="sp-hdr-avatar-wrap">'
     f'  <img src="{_avatar_src}" class="sp-hdr-avatar">'
