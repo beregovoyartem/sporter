@@ -74,6 +74,9 @@ def logo_uri(url, ttl_days=7):
 def fix_url(src: str) -> str | None:
     if not src: return None
     src = src.strip()
+    # Відносний шлях типу "./files/1110.gif" — не можемо використати
+    if src.startswith("./") or src.startswith("../"):
+        return None
     if src.startswith("//"): return "https:" + src
     if src.startswith("/"): return "https://livetv.sx" + src
     if src.startswith("http"): return src
@@ -340,26 +343,9 @@ def load_livetv():
         else:
             status = "upcoming"
 
+        # На сторінці розкладу логотипів команд немає — залишаємо None,
+        # вони будуть завантажені окремо через fetch_event_page в parser_job.py
         t1_logo = t2_logo = None
-        imgs = td.find_all("img", attrs={"itemprop": "image"})
-        if len(imgs) >= 2:
-            t1_logo = fix_url(imgs[0].get("src", ""))
-            t2_logo = fix_url(imgs[1].get("src", ""))
-        if not t1_logo or not t2_logo:
-            for i, a2 in enumerate(td.find_all("a", href=re.compile(r"/clubinfo/\d+"))[:2]):
-                img2 = a2.find("img")
-                if img2:
-                    src = fix_url(img2.get("src", ""))
-                    if src:
-                        if i == 0: t1_logo = t1_logo or src
-                        else: t2_logo = t2_logo or src
-        if not t1_logo or not t2_logo:
-            for i, img2 in enumerate(
-                td.find_all("img", src=re.compile(r"/clublogos/|/i/club|/logos/"))[:2]
-            ):
-                src = fix_url(img2.get("src", ""))
-                if i == 0: t1_logo = t1_logo or src
-                elif i == 1: t2_logo = t2_logo or src
 
         t1n, t2n = title, ""
         mp = re.match(r"^(.+?)\s*[–—]\s*(.+)$", title.strip())
@@ -415,6 +401,82 @@ def load_livetv():
     cache_set(ck, result)
     print(f"livetv: top={len(top_list)}, all={len(all_list)}", flush=True)
     return result
+
+
+# ─── ЛОГОТИПИ З СТОРІНКИ МАТЧУ ───────────────────────────────────────────────
+def fetch_logos_for_event(event_id: str, event_url: str) -> tuple[str | None, str | None]:
+    """
+    Завантажує сторінку матчу і повертає (t1_logo_url, t2_logo_url).
+    Використовує файловий кеш щоб не запитувати двічі.
+    Порядок пошуку:
+      1. JSON-LD (application/ld+json) — найнадійніше, абсолютні CDN URLs
+      2. <img itemprop="image"> — fallback
+    """
+    ck = f"logos_{event_id}"
+    cached = cache_get(ck, ttl=86400 * 30)  # логотипи не змінюються — кешуємо на 30 днів
+    if cached:
+        return cached.get("t1"), cached.get("t2")
+
+    t1 = t2 = None
+    try:
+        r = requests.get(event_url, timeout=10, headers=HDR, verify=False)
+        r.raise_for_status()
+        s = BeautifulSoup(r.text, "html.parser")
+
+        # ── Спосіб 1: JSON-LD ─────────────────────────────────────────────────
+        for script in s.find_all("script", type="application/ld+json"):
+            try:
+                data = json.loads(script.string or "")
+                images = data.get("image", [])
+                if isinstance(images, list) and len(images) >= 2:
+                    t1 = images[0] if images[0].startswith("http") else None
+                    t2 = images[1] if images[1].startswith("http") else None
+                    if t1 and t2:
+                        break
+            except Exception:
+                pass
+
+        # ── Спосіб 2: <img itemprop="image"> ─────────────────────────────────
+        if not t1 or not t2:
+            logos = []
+            for img in s.find_all("img", attrs={"itemprop": "image"}):
+                src = img.get("src", "").strip()
+                # Пропускаємо відносні шляхи (збережені локально браузером)
+                if not src.startswith("http"):
+                    # Намагаємось реконструювати CDN URL з імені файлу
+                    fname = src.split("/")[-1]
+                    if re.match(r"^\d+\.gif$", fname):
+                        src = f"https://cdn.livetv873.me/img/teams/fullsize/ods/{fname}"
+                    else:
+                        continue
+                if src not in logos:
+                    logos.append(src)
+            if logos and not t1:
+                t1 = logos[0]
+            if len(logos) > 1 and not t2:
+                t2 = logos[1]
+
+        # ── Спосіб 3: CDN URLs напряму з тексту HTML ─────────────────────────
+        if not t1 or not t2:
+            cdn_logos = re.findall(
+                r'https://cdn\.livetv\d+\.me/img/teams/[^\s"\'<>]+\.gif',
+                r.text,
+            )
+            # Фільтруємо унікальні
+            seen_cdn = []
+            for u in cdn_logos:
+                if u not in seen_cdn:
+                    seen_cdn.append(u)
+            if seen_cdn and not t1:
+                t1 = seen_cdn[0]
+            if len(seen_cdn) > 1 and not t2:
+                t2 = seen_cdn[1]
+
+    except Exception as e:
+        print(f"  fetch_logos {event_id}: {e}", flush=True)
+
+    cache_set(ck, {"t1": t1, "t2": t2})
+    return t1, t2
 
 
 # ─── РАХУНОК ЗІ СТОРІНКИ МАТЧУ ──────────────────────────────────────────────
@@ -480,16 +542,47 @@ def fetch_event_page(event_id: str, event_url: str, status: str) -> dict:
 
         result["score"] = score
 
+        # Логотипи через JSON-LD (найнадійніше)
         logos = []
-        for img in s.find_all("img", attrs={"itemprop": "image"}):
-            src = fix_url(img.get("src", ""))
-            if src and src not in logos: logos.append(src)
+        for script in s.find_all("script", type="application/ld+json"):
+            try:
+                data = json.loads(script.string or "")
+                images = data.get("image", [])
+                if isinstance(images, list):
+                    for img_url in images:
+                        if img_url.startswith("http") and img_url not in logos:
+                            logos.append(img_url)
+                if len(logos) >= 2:
+                    break
+            except Exception:
+                pass
+
+        # Fallback: <img itemprop="image">
         if len(logos) < 2:
-            for img in s.find_all("img", src=re.compile(r"/clublogos/|/logos/|/i/club")):
-                src = fix_url(img.get("src", ""))
-                if src and src not in logos: logos.append(src)
+            for img in s.find_all("img", attrs={"itemprop": "image"}):
+                src = img.get("src", "").strip()
+                if not src.startswith("http"):
+                    fname = src.split("/")[-1]
+                    if re.match(r"^\d+\.gif$", fname):
+                        src = f"https://cdn.livetv873.me/img/teams/fullsize/ods/{fname}"
+                    else:
+                        continue
+                if src not in logos:
+                    logos.append(src)
+
+        # Fallback: CDN URLs з тексту HTML
+        if len(logos) < 2:
+            cdn_logos = re.findall(
+                r'https://cdn\.livetv\d+\.me/img/teams/[^\s"\'<>]+\.gif',
+                r.text,
+            )
+            for u in cdn_logos:
+                if u not in logos:
+                    logos.append(u)
+
         if logos: result["t1"] = logos[0]
         if len(logos) > 1: result["t2"] = logos[1]
+
     except Exception as e:
         print(f"  event {event_id}: {e}", flush=True)
 

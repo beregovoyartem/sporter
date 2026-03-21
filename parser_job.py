@@ -67,7 +67,7 @@ def sb_get_meta(key: str) -> str:
 # Логотипи скачуються з livetv.sx один раз і зберігаються назавжди.
 # При повторних парсингах — просто перевіряємо наявність і повертаємо готовий URL.
 
-_logo_cache: dict = {}  # локальний кеш в межах одного запуску
+_logo_storage_cache: dict = {}  # локальний кеш в межах одного запуску
 
 def upload_logo_to_storage(url: str) -> str | None:
     """
@@ -169,7 +169,7 @@ class _MockST:
 
 sys.modules["streamlit"] = _MockST()
 
-from parsers import load_livetv, load_livetv_live, load_gooool_urls, find_gooool
+from parsers import load_livetv, load_livetv_live, load_gooool_urls, find_gooool, fetch_logos_for_event
 
 
 # ─── MODE: MATCHES ────────────────────────────────────────────────────────────
@@ -188,25 +188,71 @@ def run_matches():
     except Exception as e:
         print(f"  Gooool помилка: {e}", flush=True)
 
-    # Збираємо всі унікальні URL логотипів заздалегідь
-    logo_urls = set()
-    for m in all_matches:
-        if m.get("t1_logo"): logo_urls.add(m["t1_logo"])
-        if m.get("t2_logo"): logo_urls.add(m["t2_logo"])
+    # ── Логотипи: завантажуємо зі сторінок матчів ────────────────────────────
+    # Завантажуємо тільки для матчів у яких ще немає логотипів в БД.
+    print(f"  Перевіряємо логотипи в БД...", flush=True)
+    existing_with_logos = set()
+    try:
+        eids = [m["event_id"] for m in all_matches if m.get("event_id")]
+        for i in range(0, len(eids), 100):
+            batch_ids = eids[i:i+100]
+            ids_str = ",".join(batch_ids)
+            rows_db = sb_select("matches", f"event_id=in.({ids_str})&select=event_id,t1_logo")
+            for row in rows_db:
+                if row.get("t1_logo"):
+                    existing_with_logos.add(row["event_id"])
+    except Exception as e:
+        print(f"  Помилка перевірки логотипів: {e}", flush=True)
 
-    print(f"  Завантажуємо {len(logo_urls)} логотипів в Storage...", flush=True)
-    uploaded = failed = skipped = 0
-    for logo_url in logo_urls:
-        result = upload_logo_to_storage(logo_url)
-        if result is None:
-            failed += 1
-        elif result == logo_url:
-            skipped += 1  # fallback — залишили оригінальний URL
-        else:
-            uploaded += 1
-    print(f"  Логотипи: {uploaded} завантажено, {skipped} fallback, {failed} помилок", flush=True)
+    need_logos = [m for m in all_matches if m.get("event_id") not in existing_with_logos]
+    print(f"  Потрібно завантажити логотипи для {len(need_logos)} матчів "
+          f"(вже є: {len(existing_with_logos)})", flush=True)
 
-    # Формуємо рядки для БД
+    logo_map: dict = {}  # event_id -> (t1_logo_url, t2_logo_url)
+
+    if need_logos:
+        ok = fail = 0
+        for idx, m in enumerate(need_logos):
+            eid  = m.get("event_id", "")
+            eurl = m.get("url", "")
+            if not eid or not eurl:
+                continue
+            try:
+                t1, t2 = fetch_logos_for_event(eid, eurl)
+                logo_map[eid] = (t1, t2)
+                if t1 or t2:
+                    ok += 1
+                else:
+                    fail += 1
+            except Exception as e:
+                print(f"  Logo fetch error {eid}: {e}", flush=True)
+                fail += 1
+            # Throttle — 0.3с між запитами щоб не банили
+            if idx % 10 == 9:
+                time.sleep(0.3)
+
+        print(f"  Логотипи отримано: {ok} успішно, {fail} без логотипів", flush=True)
+
+    # Завантажуємо логотипи в Supabase Storage
+    all_logo_urls = set()
+    for t1, t2 in logo_map.values():
+        if t1: all_logo_urls.add(t1)
+        if t2: all_logo_urls.add(t2)
+
+    if all_logo_urls:
+        print(f"  Завантажуємо {len(all_logo_urls)} логотипів в Storage...", flush=True)
+        uploaded = skipped = failed = 0
+        for logo_url in all_logo_urls:
+            result = upload_logo_to_storage(logo_url)
+            if result is None:
+                failed += 1
+            elif result == logo_url:
+                skipped += 1
+            else:
+                uploaded += 1
+        print(f"  Storage: {uploaded} нових, {skipped} fallback, {failed} помилок", flush=True)
+
+    # ── Формуємо рядки для БД ────────────────────────────────────────────────
     now = datetime.utcnow().isoformat()
     rows = []
     seen = set()
@@ -222,13 +268,7 @@ def run_matches():
         except Exception:
             pass
 
-        # Логотипи: беремо з кешу (вже завантажені вище) або fallback на оригінальний URL
-        t1_logo_raw = m.get("t1_logo")
-        t2_logo_raw = m.get("t2_logo")
-        t1_logo = _logo_cache.get(t1_logo_raw, t1_logo_raw) if t1_logo_raw else None
-        t2_logo = _logo_cache.get(t2_logo_raw, t2_logo_raw) if t2_logo_raw else None
-
-        rows.append({
+        row = {
             "event_id":    eid,
             "time":        m.get("time", now),
             "team1":       m.get("team1", ""),
@@ -239,13 +279,23 @@ def run_matches():
             "status":      m.get("status", "upcoming"),
             "score":       m.get("score"),
             "url":         m.get("url", ""),
-            "t1_logo":     t1_logo,
-            "t2_logo":     t2_logo,
             "is_top":      bool(m.get("is_top", False)),
             "always_show": bool(m.get("always_show", False)),
             "gooool_url":  gurl,
             "updated_at":  now,
-        })
+        }
+
+        # Додаємо логотипи тільки якщо отримали нові (не затираємо існуючі None'ом)
+        if eid in logo_map:
+            t1_raw, t2_raw = logo_map[eid]
+            t1_logo = _logo_storage_cache.get(t1_raw, t1_raw) if t1_raw else None
+            t2_logo = _logo_storage_cache.get(t2_raw, t2_raw) if t2_raw else None
+            if t1_logo is not None:
+                row["t1_logo"] = t1_logo
+            if t2_logo is not None:
+                row["t2_logo"] = t2_logo
+
+        rows.append(row)
 
     print(f"  Зберігаємо {len(rows)} матчів в Supabase...", flush=True)
     sb_upsert("matches", rows)
