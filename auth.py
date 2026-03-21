@@ -12,127 +12,146 @@ def _auth_available() -> bool:
 
 
 def render_login_page():
-    """Сторінка входу в стилі застосунку."""
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Pacifico&display=swap');
-    *{box-sizing:border-box}
-    html,body,[class*="css"]{font-family:'Inter',sans-serif}
-    #MainMenu,footer,header{visibility:hidden}
-    .stApp{
-        background:#050b18;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+    #MainMenu, footer, header { visibility: hidden; }
+
+    .stApp {
+        background: #050b18;
         background-image:
             radial-gradient(ellipse 90% 55% at 15% -5%,  rgba(0,50,160,0.6)  0%, transparent 55%),
             radial-gradient(ellipse 55% 45% at 85% 105%, rgba(0,100,35,0.4)  0%, transparent 50%),
-            radial-gradient(ellipse 35% 25% at 50% 55%,  rgba(0,20,80,0.35)  0%, transparent 65%),
             linear-gradient(175deg, #060e22 0%, #060b18 45%, #04100d 100%);
-        min-height:100vh;
-    }
-    /* НЕ чіпаємо .block-container — центруємо через внутрішній div */
-    .block-container{
-        padding-top:0!important;
-        padding-bottom:0!important;
-        max-width:460px!important;
-        overflow:visible!important;
-    }
-    /* overflow для всіх батьків лого */
-    .block-container > div, .block-container > div > div {
-        overflow:visible!important;
+        min-height: 100vh;
     }
 
-    @keyframes ts{0%{background-position:0%}100%{background-position:300%}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    /* Центруємо контент вертикально */
+    .block-container {
+        max-width: 440px !important;
+        padding: 0 20px !important;
+        margin: 0 auto !important;
+    }
+    section[data-testid="stMain"] > div {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
 
-    .lp-outer{
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        min-height:100vh;
-        padding:0 20px 40px;
-        margin-top:-60px; /* компенсуємо стандартний відступ Streamlit */
-    }
-    .lp-title{
-        font-family:'Pacifico',cursive;
-        font-size:4.4em;
-        line-height:1.3;
-        padding:6px 8px 18px;
-        margin:0 0 6px;
-        background:linear-gradient(110deg,#a0650a 0%,#ffd234 25%,#ffe680 50%,#c8860a 75%,#ffd234 100%);
-        background-size:300% auto;
-        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-        animation:ts 3.5s linear infinite, fadeUp .5s ease both;
-        text-align:center;
-    }
-    .lp-sub{
-        color:#6b8ab0;font-size:.93em;font-weight:500;
-        margin:0 0 24px;
-        animation:fadeUp .6s .1s ease both;
-        text-align:center;letter-spacing:.2px;
-    }
-    .lp-card{
-        background:rgba(10,20,50,0.78);
-        border:1px solid rgba(79,163,255,0.18);
-        border-radius:20px 20px 0 0;
-        padding:28px 32px 20px;
-        width:100%;
-        display:flex;flex-direction:column;align-items:center;gap:12px;
-        box-shadow:0 8px 48px rgba(0,20,80,0.5);
-        position:relative;overflow:hidden;
-        animation:fadeUp .7s .15s ease both;
-    }
-    .lp-card::before{
-        content:'';position:absolute;top:0;left:0;right:0;height:2px;
-        background:linear-gradient(90deg,#1a6fff,#00c6ff,#ffd234);opacity:.85;
-    }
-    .lp-card-title{font-size:1.08em;font-weight:700;color:#dde6f5;margin:0;}
-    .lp-card-sub{font-size:.82em;color:#4a6080;margin:0;text-align:center;line-height:1.55;}
-    .lp-divider{
-        width:100%;display:flex;align-items:center;gap:10px;
-        color:#2a3a5a;font-size:.77em;font-weight:500;
-        margin-bottom:0;
-    }
-    .lp-divider::before,.lp-divider::after{content:'';flex:1;height:1px;background:rgba(79,163,255,0.12);}
+    /* Прибираємо всі gaps між елементами */
+    .block-container > div > div > div > div { margin: 0 !important; padding: 0 !important; }
+    /* iframe OAuth кнопки */
+    .block-container iframe { display: block !important; margin: 0 !important; }
 
-    /* Кнопка OAuth склеєна з карткою знизу */
-    /* Прибираємо відступи між усіма елементами в login-контейнері */
-    .block-container > div > div > div > div { margin-top:0!important; padding-top:0!important; }
-    /* iframe з OAuth кнопкою */
-    .block-container iframe { margin-top:-12px!important; display:block!important; }
-    .stButton > button{
-        width:100%!important;
-        background:#ffffff!important;color:#3c4043!important;
-        border:1px solid rgba(79,163,255,0.22)!important;
-        border-top:none!important;
-        border-radius:0 0 20px 20px!important;
-        padding:0 20px!important;
-        font-family:'Inter',sans-serif!important;font-size:.93em!important;font-weight:600!important;
-        height:50px!important;
-        box-shadow:0 6px 24px rgba(0,20,80,0.4)!important;
-        transition:box-shadow .15s,background .15s!important;
-        margin-top:0!important;
+    @keyframes ts { 0% { background-position: 0% } 100% { background-position: 300% } }
+
+    .lp-title {
+        font-family: 'Pacifico', cursive;
+        font-size: 4em;
+        line-height: 1.2;
+        padding: 4px 4px 16px;
+        margin: 0 0 4px;
+        background: linear-gradient(110deg,#a0650a 0%,#ffd234 25%,#ffe680 50%,#c8860a 75%,#ffd234 100%);
+        background-size: 300% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: ts 3.5s linear infinite;
+        text-align: center;
+        display: block;
+        overflow: visible;
     }
-    .stButton > button:hover{
-        background:#f4f7ff!important;
-        box-shadow:0 8px 28px rgba(0,40,160,0.25)!important;
+    .lp-sub {
+        color: #6b8ab0;
+        font-size: .93em;
+        font-weight: 500;
+        text-align: center;
+        margin: 0 0 20px;
+        display: block;
     }
-    .lp-footer{
-        margin-top:14px;color:#2a3a5a;font-size:.74em;text-align:center;
-        line-height:1.6;animation:fadeUp .9s .3s ease both;
+    .lp-card {
+        background: rgba(10,20,50,0.78);
+        border: 1px solid rgba(79,163,255,0.18);
+        border-bottom: none;
+        border-radius: 18px 18px 0 0;
+        padding: 24px 28px 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .lp-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #1a6fff, #00c6ff, #ffd234);
+    }
+    .lp-card-title {
+        font-size: 1.05em;
+        font-weight: 700;
+        color: #dde6f5;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+    .lp-card-sub {
+        font-size: .82em;
+        color: #4a6080;
+        text-align: center;
+        line-height: 1.55;
+    }
+    .lp-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #2a3a5a;
+        font-size: .75em;
+        font-weight: 500;
+        margin-top: 16px;
+    }
+    .lp-divider::before, .lp-divider::after {
+        content: ''; flex: 1;
+        height: 1px;
+        background: rgba(79,163,255,0.12);
+    }
+
+    /* Кнопка OAuth — без відступу, пришита до картки */
+    .stButton > button {
+        width: 100% !important;
+        background: #fff !important;
+        color: #3c4043 !important;
+        border: 1px solid rgba(79,163,255,0.2) !important;
+        border-top: none !important;
+        border-radius: 0 0 18px 18px !important;
+        height: 48px !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: .93em !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 20px rgba(0,20,80,0.3) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .stButton > button:hover {
+        background: #f4f7ff !important;
+    }
+
+    .lp-footer {
+        color: #2a3a5a;
+        font-size: .73em;
+        text-align: center;
+        margin-top: 14px;
+        display: block;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Весь статичний HTML — один блок
+    st.markdown('<span class="lp-title">Sporter</span>', unsafe_allow_html=True)
+    st.markdown('<span class="lp-sub">Умное расписание футбольных матчей</span>', unsafe_allow_html=True)
     st.markdown("""
-    <div class="lp-outer">
-        <div class="lp-title">Sporter</div>
-        <div class="lp-sub">Умное расписание футбольных матчей</div>
-        <div class="lp-card">
-            <div class="lp-card-title">Добро пожаловать</div>
-            <div class="lp-card-sub">Войдите чтобы сохранять настройки<br>и выбранные лиги между сессиями</div>
-            <div class="lp-divider">войти через</div>
-        </div>
+    <div class="lp-card">
+        <div class="lp-card-title">Добро пожаловать</div>
+        <div class="lp-card-sub">Войдите чтобы сохранять настройки<br>и выбранные лиги между сессиями</div>
+        <div class="lp-divider">войти через</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -150,19 +169,12 @@ def render_login_page():
         key="google_login",
         use_container_width=True,
     )
-
-    st.markdown(
-        '<div class="lp-footer">🔒 Мы используем только ваш email для сохранения настроек</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<span class="lp-footer">🔒 Мы используем только ваш email для сохранения настроек</span>', unsafe_allow_html=True)
 
     if result and "token" in result:
         import jwt as pyjwt
         try:
-            info = pyjwt.decode(
-                result["token"]["id_token"],
-                options={"verify_signature": False}
-            )
+            info = pyjwt.decode(result["token"]["id_token"], options={"verify_signature": False})
             st.session_state["user_email"]  = info.get("email", "")
             st.session_state["user_name"]   = info.get("name", info.get("email", ""))
             st.session_state["user_avatar"] = info.get("picture", "")
@@ -172,7 +184,6 @@ def render_login_page():
 
 
 def get_current_user() -> dict | None:
-    """Повертає dict з email/name/avatar або None якщо не залогінений."""
     if not _auth_available():
         return {"email": "local", "name": "Local", "avatar": ""}
     email = st.session_state.get("user_email")
