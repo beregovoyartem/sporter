@@ -17,13 +17,16 @@ def _supabase_available() -> bool:
         return False
 
 
+def _sb():
+    from supabase import create_client
+    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+
+
 def _sb_load_cfg(email: str) -> dict | None:
     if not _supabase_available():
         return None
     try:
-        from supabase import create_client
-        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-        res = sb.table("user_settings").select("settings").eq("email", email).execute()
+        res = _sb().table("user_settings").select("settings").eq("email", email).execute()
         if res.data:
             return json.loads(res.data[0]["settings"])
     except Exception as e:
@@ -35,9 +38,7 @@ def _sb_save_cfg(email: str, cfg: dict):
     if not _supabase_available():
         return
     try:
-        from supabase import create_client
-        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-        sb.table("user_settings").upsert({
+        _sb().table("user_settings").upsert({
             "email":    email,
             "settings": json.dumps(cfg, ensure_ascii=False),
             "updated_at": datetime.utcnow().isoformat(),
@@ -50,9 +51,7 @@ def _sb_load_leagues(email: str) -> set:
     if not _supabase_available():
         return set()
     try:
-        from supabase import create_client
-        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-        res = sb.table("user_leagues").select("leagues").eq("email", email).execute()
+        res = _sb().table("user_leagues").select("leagues").eq("email", email).execute()
         if res.data:
             return set(json.loads(res.data[0]["leagues"]))
     except Exception as e:
@@ -64,15 +63,50 @@ def _sb_save_leagues(email: str, leagues: set):
     if not _supabase_available():
         return
     try:
-        from supabase import create_client
-        sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-        sb.table("user_leagues").upsert({
+        _sb().table("user_leagues").upsert({
             "email":   email,
             "leagues": json.dumps(sorted(leagues), ensure_ascii=False),
             "updated_at": datetime.utcnow().isoformat(),
         }).execute()
     except Exception as e:
         print(f"Supabase save leagues: {e}", flush=True)
+
+
+# ─── ГЛОБАЛЬНІ ЛІГИ (всі ліги сайту, поповнюються з парсингу) ───────────────
+def load_global_leagues() -> set:
+    """Завантажує глобальний список всіх відомих ліг."""
+    if "global_leagues_cache" in st.session_state:
+        return set(st.session_state.global_leagues_cache)
+    if not _supabase_available():
+        return set()
+    try:
+        res = _sb().table("global_leagues").select("leagues").eq("id", 1).execute()
+        if res.data:
+            leagues = set(json.loads(res.data[0]["leagues"]))
+            st.session_state.global_leagues_cache = sorted(leagues)
+            return leagues
+    except Exception as e:
+        print(f"Global leagues load: {e}", flush=True)
+    return set()
+
+
+def save_global_leagues(new_leagues: set):
+    """Додає нові ліги до глобального списку (ніколи не видаляє)."""
+    existing = load_global_leagues()
+    merged   = existing | new_leagues
+    if merged == existing:
+        return  # нічого нового — не пишемо в БД
+    st.session_state.global_leagues_cache = sorted(merged)
+    if not _supabase_available():
+        return
+    try:
+        _sb().table("global_leagues").upsert({
+            "id":      1,
+            "leagues": json.dumps(sorted(merged), ensure_ascii=False),
+            "updated_at": datetime.utcnow().isoformat(),
+        }).execute()
+    except Exception as e:
+        print(f"Global leagues save: {e}", flush=True)
 
 
 # ─── PUBLIC API ───────────────────────────────────────────────────────────────

@@ -37,14 +37,19 @@ def render_admin_page(user_email: str):
 
     if "adm_all_leagues" not in st.session_state:
         try:
-            res2 = sb.table("user_leagues").select("leagues").execute()
-            known = set()
-            for row in (res2.data or []):
-                try: known.update(json.loads(row["leagues"]))
-                except: pass
-            st.session_state.adm_all_leagues = sorted(known)
+            from db import load_global_leagues
+            st.session_state.adm_all_leagues = sorted(load_global_leagues())
         except Exception:
-            st.session_state.adm_all_leagues = []
+            # Fallback — збираємо з user_leagues
+            try:
+                res2 = sb.table("user_leagues").select("leagues").execute()
+                known = set()
+                for row in (res2.data or []):
+                    try: known.update(json.loads(row["leagues"]))
+                    except: pass
+                st.session_state.adm_all_leagues = sorted(known)
+            except Exception:
+                st.session_state.adm_all_leagues = []
 
     users      = st.session_state.adm_users
     all_leagues = st.session_state.adm_all_leagues

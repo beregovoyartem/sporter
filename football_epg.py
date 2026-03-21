@@ -25,7 +25,7 @@ st.set_page_config(page_title="Sporter", layout="wide", initial_sidebar_state="c
 from auth    import get_current_user, render_login_page, _auth_available
 from config  import (TZ_SITE, TOP_CLUBS, YOUTH_KEYWORDS, UKR_TEAM_KW,
                      UKR_BOOST_LEAGUES, LEAGUE_POP)
-from db      import load_cfg, save_cfg, load_known_leagues, save_known_leagues
+from db      import load_cfg, save_cfg, load_known_leagues, save_known_leagues, save_global_leagues
 from styles  import get_css
 from parsers import (
     load_livetv, load_livetv_live, load_gooool_urls,
@@ -140,6 +140,8 @@ _saved_leagues            = load_known_leagues(USER_EMAIL)
 all_known_leagues_merged  = all_known_leagues_current | _saved_leagues
 if all_known_leagues_current - _saved_leagues:
     save_known_leagues(USER_EMAIL, all_known_leagues_merged)
+# Поповнюємо глобальний список ліг з парсингу
+save_global_leagues(all_known_leagues_current)
 all_known_leagues = sorted(all_known_leagues_merged, key=league_sort_key)
 
 # ─── ФІЛЬТРАЦІЯ МАТЧІВ ───────────────────────────────────────────────────────
