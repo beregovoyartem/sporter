@@ -199,41 +199,35 @@ if to_cache:
         lc_bar.progress((i+1)/len(to_cache), text=f"Кэш лого: {i+1}/{len(to_cache)}")
     lc_bar.empty()
 
-# ─── TOPBAR ──────────────────────────────────────────────────────────────────
-_avatar_img = (
-    f'<img src="{USER_AVATAR}" style="width:40px;height:40px;border-radius:50%;'
-    f'object-fit:cover;border:2px solid rgba(79,163,255,0.5);flex-shrink:0">'
-    if USER_AVATAR else
-    f'<div style="width:40px;height:40px;border-radius:50%;background:rgba(79,163,255,0.12);'
-    f'border:2px solid rgba(79,163,255,0.3);display:flex;align-items:center;'
-    f'justify-content:center;font-size:1.2em;flex-shrink:0">👤</div>'
+# ─── HEADER ──────────────────────────────────────────────────────────────────
+_avatar_src = USER_AVATAR or ""
+_avatar_block = (
+    f'<img src="{_avatar_src}" class="sp-hdr-avatar">'
+    if _avatar_src else
+    '<div class="sp-hdr-avatar sp-hdr-avatar-ph">👤</div>'
 )
 st.markdown(
-    f'<div class="sp-topbar">'
-    f'  <div class="sp-topbar-user">'
-    f'    {_avatar_img}'
-    f'    <div class="sp-topbar-info">'
-    f'      <span class="sp-topbar-name">{USER_NAME}</span>'
-    f'      <span class="sp-topbar-email">{USER_EMAIL}</span>'
-    f'    </div>'
-    f'  </div>'
-    f'  <div class="sp-topbar-actions" id="sp-actions-slot"></div>'
+    f'<div class="sp-hdr">'
+    f'  {_avatar_block}'
+    f'  <div class="site-title">Sporter</div>'
+    f'  <div class="sp-hdr-btns" id="sp-hdr-btns-slot"></div>'
     f'</div>',
     unsafe_allow_html=True,
 )
 
-# Кнопки рендеримо окремо — CSS підтягує їх у .sp-topbar-actions через негативний margin
-_btn_col1, _btn_col2 = st.columns([1, 1])
-with _btn_col1:
-    if st.button("⚙ Настройки", key="open_cfg", use_container_width=True):
+_bcol1, _bcol2 = st.columns([1, 1])
+with _bcol1:
+    if st.button("Настройки", key="open_cfg", use_container_width=True):
         st.session_state["_open_settings"] = True
         st.rerun()
-with _btn_col2:
-    if st.button("⏻ Выйти", key="logout_btn", use_container_width=True):
+with _bcol2:
+    if st.button("Выйти", key="logout_btn", use_container_width=True):
         for k in ["user_email","user_name","user_avatar",
                   "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
             st.session_state.pop(k, None)
         st.rerun()
+
+st.markdown('<div class="sp-hdr-sep"></div>', unsafe_allow_html=True)
 
 if st.session_state.pop("_open_settings", False):
     settings_modal(
@@ -244,12 +238,6 @@ if st.session_state.pop("_open_settings", False):
         SHOW_INTERESTING=SHOW_INTERESTING, BOOST_UKRAINE=BOOST_UKRAINE,
         ACTIVE_LGS=ACTIVE_LGS,
     )
-
-# ─── HEADER ───────────────────────────────────────────────────────────────────────────────
-st.markdown(
-    '<div class="site-title" style="padding:14px 0 10px;overflow:visible">Sporter</div>',
-    unsafe_allow_html=True,
-)
 
 # ─── ДАТИ → ТАБКІ → МАТЧІ ────────────────────────────────────────────────────
 today    = now.date()

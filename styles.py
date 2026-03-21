@@ -21,75 +21,55 @@ section[data-testid="stSidebar"],
 section[data-testid="stMain"]{{margin-left:0!important;}}
 .lp-outer,.lp-title,.lp-sub,.lp-card,.lp-footer{{display:none!important}}
 
-/* ── Topbar ── */
-.sp-topbar {{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:8px 0 0;
-    border-bottom:1px solid rgba(79,163,255,0.1);
-    margin-bottom:0;
+/* ── Header: аватар по центру → лого → кнопки в рядок ── */
+.sp-hdr {{
+    display:flex;flex-direction:column;align-items:center;
+    padding:18px 0 0;gap:6px;
 }}
-.sp-topbar-user {{
-    display:flex;align-items:center;gap:10px;min-width:0;
+.sp-hdr-avatar {{
+    width:64px;height:64px;border-radius:50%;object-fit:cover;
+    border:2px solid rgba(79,163,255,0.5);
+    box-shadow:0 2px 16px rgba(0,60,180,0.3);
+    display:block;
 }}
-.sp-topbar-info {{
-    display:flex;flex-direction:column;gap:1px;min-width:0;
+.sp-hdr-avatar-ph {{
+    width:64px;height:64px;border-radius:50%;
+    background:rgba(79,163,255,0.1);border:2px solid rgba(79,163,255,0.3);
+    display:flex;align-items:center;justify-content:center;font-size:1.6em;
 }}
-.sp-topbar-name {{
-    font-size:.92em;font-weight:700;color:{CLR};
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;
+/* site-title всередині sp-hdr — центруємо */
+.sp-hdr .site-title {{
+    text-align:center;padding:2px 0 4px;
 }}
-.sp-topbar-email {{
-    font-size:.72em;color:{CLRS};opacity:.75;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;
+.sp-hdr-sep {{
+    width:100%;height:1px;background:rgba(79,163,255,0.1);margin:4px 0 10px;
 }}
-/* Підтягуємо рядок з кнопками (наступний stHorizontalBlock) вгору щоб злитись з topbar */
-.sp-topbar + div + div[data-testid="stHorizontalBlock"],
-.sp-topbar + div[data-testid="stHorizontalBlock"] {{
-    margin-top:-52px!important;
-    padding-bottom:6px!important;
-    border-bottom:1px solid rgba(79,163,255,0.1)!important;
-    margin-bottom:6px!important;
-    display:flex!important;
-    justify-content:flex-end!important;
-    gap:6px!important;
-    align-items:center!important;
-}}
-.sp-topbar + div + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
-.sp-topbar + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
-    flex:0 0 auto!important;
-    width:auto!important;
-    min-width:0!important;
+/* Кнопки — рядок з двох колонок одразу після sp-hdr */
+.sp-hdr + div[data-testid="stHorizontalBlock"] {{
+    max-width:320px!important;
+    margin:0 auto 14px!important;
+    gap:8px!important;
     padding:0!important;
 }}
-.sp-topbar + div + div[data-testid="stHorizontalBlock"] .stButton > button,
-.sp-topbar + div[data-testid="stHorizontalBlock"] .stButton > button {{
+.sp-hdr + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+    padding:0 4px!important;
+}}
+.sp-hdr + div[data-testid="stHorizontalBlock"] .stButton > button {{
     background:rgba(79,163,255,0.07)!important;
-    color:#7a9abf!important;
+    color:#8ab4d8!important;
     border:1px solid rgba(79,163,255,0.18)!important;
-    border-radius:9px!important;
-    height:34px!important;
-    font-size:.8em!important;font-weight:600!important;
-    padding:0 14px!important;
+    border-radius:10px!important;
+    height:36px!important;
+    font-size:.82em!important;font-weight:600!important;
+    letter-spacing:.3px!important;
     box-shadow:none!important;
-    white-space:nowrap!important;
+    width:100%!important;
     transition:background .15s,border-color .15s,color .15s!important;
-    width:auto!important;min-width:unset!important;
 }}
-.sp-topbar + div + div[data-testid="stHorizontalBlock"] .stButton > button:hover,
-.sp-topbar + div[data-testid="stHorizontalBlock"] .stButton > button:hover {{
+.sp-hdr + div[data-testid="stHorizontalBlock"] .stButton > button:hover {{
     background:rgba(79,163,255,0.16)!important;
-    border-color:rgba(79,163,255,0.4)!important;
+    border-color:rgba(79,163,255,0.42)!important;
     color:#dde6f5!important;
-}}
-@media (max-width: 640px) {{
-    .sp-topbar + div + div[data-testid="stHorizontalBlock"],
-    .sp-topbar + div[data-testid="stHorizontalBlock"] {{
-        margin-top:-44px!important;
-    }}
-    .sp-topbar-name {{ font-size:.82em; }}
-    .sp-topbar-email {{ display:none; }}
 }}
 
 .site-title{{
