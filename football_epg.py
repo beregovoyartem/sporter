@@ -209,9 +209,8 @@ with _bcol1:
         st.rerun()
 with _bcol2:
     if st.button("Выйти", key="logout_btn", use_container_width=True):
-        for k in ["user_email","user_name","user_avatar",
-                  "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
-            st.session_state.pop(k, None)
+        from auth import logout
+        logout()
         st.rerun()
 
 _avatar_src = USER_AVATAR or ""

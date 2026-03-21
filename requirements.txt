@@ -5,3 +5,4 @@ urllib3
 streamlit-oauth
 PyJWT
 supabase
+extra-streamlit-components
