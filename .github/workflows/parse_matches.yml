@@ -1,0 +1,30 @@
+name: Parse Matches
+
+on:
+  schedule:
+    # Кожні 2 години
+    - cron: '0 */2 * * *'
+  workflow_dispatch:  # Ручний запуск з GitHub UI
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 urllib3
+
+      - name: Run parser
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python parser_job.py matches
