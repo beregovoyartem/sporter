@@ -198,90 +198,98 @@ if to_cache:
     lc_bar.empty()
 
 # ─── HEADER ──────────────────────────────────────────────────────────────────
-_col_logo, _col_mid, _col_right = st.columns([3, 5, 1])
-with _col_logo:
-    st.markdown('<div class="site-title" style="padding:14px 0 10px">Sporter</div>',
-                unsafe_allow_html=True)
-with _col_right:
-    # Аватар-кнопка → popover з меню (не конфліктує з st.dialog)
-    # label — тільки текст, аватар через CSS background-image
-    _av_style = f'background-image:url("{USER_AVATAR}");background-size:cover;background-position:center;' if USER_AVATAR else ''
-    st.markdown(f"""
-    <style>
-    /* Кнопка popover — кругла з аватаром */
-    div[data-testid="stPopover"]{{position:relative}}
-    div[data-testid="stPopover"] > div > button {{
-        background-color: rgba(10,20,50,0.6) !important;
-        {_av_style}
-        border: 2px solid rgba(79,163,255,0.4) !important;
-        border-radius: 50% !important;
-        width: 40px !important;
-        height: 40px !important;
-        min-height: 40px !important;
-        padding: 0 !important;
-        margin-top: 11px !important;
-        box-shadow: 0 2px 12px rgba(0,60,180,0.3) !important;
-        transition: border-color .2s, box-shadow .2s !important;
-        overflow: hidden !important;
-    }}
-    div[data-testid="stPopover"] > div > button:hover {{
-        border-color: rgba(79,163,255,0.75) !important;
-        box-shadow: 0 2px 18px rgba(79,163,255,0.35) !important;
-    }}
-    /* Ховаємо текст всередині кнопки (показуємо тільки фото) */
-    div[data-testid="stPopover"] > div > button p {{
-        {"opacity:0!important;font-size:0!important;" if USER_AVATAR else "font-size:1.3em!important;margin:0!important;"}
-    }}
-    /* Прив'язуємо дропдаун до правого краю */
-    div[data-testid="stPopoverBody"] {{
-        right: 0 !important;
-        left: auto !important;
-        padding: 6px !important;
-        min-width: 210px !important;
-    }}
-    div[data-testid="stPopoverBody"] .stButton > button {{
-        background: transparent !important;
-        border: none !important;
-        border-radius: 8px !important;
-        color: #dde6f5 !important;
-        font-size: .88em !important;
-        font-weight: 600 !important;
-        height: 38px !important;
-        width: 100% !important;
-        justify-content: flex-start !important;
-        padding: 0 10px !important;
-        box-shadow: none !important;
-        text-align: left !important;
-    }}
-    div[data-testid="stPopoverBody"] .stButton > button:hover {{
-        background: rgba(79,163,255,0.1) !important;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+# Хедер: лого зліва, аватар-popover справа через position:absolute щоб не ламав layout
+_av_style = (
+    f'background-image:url("{USER_AVATAR}");background-size:cover;background-position:center;'
+    if USER_AVATAR else ''
+)
+_av_text = "" if USER_AVATAR else "👤"
 
-    with st.popover("👤" if not USER_AVATAR else " ", use_container_width=False):
-        # Мікро-профіль всередині popover
+st.markdown(f"""
+<style>
+/* Хедер-рядок */
+.hdr-row {{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 0 10px;position:relative;
+}}
+/* Аватар — прибитий до правого краю через absolute щоб НЕ впливав на ширину колонок */
+.hdr-avatar-wrap {{
+    position:absolute;right:0;top:50%;transform:translateY(-50%);
+    width:44px;height:44px;z-index:10;
+}}
+/* Кнопка popover — кругла з фото */
+div[data-testid="stPopover"] > div > button {{
+    {_av_style}
+    background-color:rgba(10,20,50,0.7)!important;
+    background-size:cover!important;background-position:center!important;
+    border:2px solid rgba(79,163,255,0.4)!important;
+    border-radius:50%!important;
+    width:40px!important;height:40px!important;min-height:40px!important;
+    padding:0!important;overflow:hidden!important;
+    box-shadow:0 2px 12px rgba(0,60,180,0.3)!important;
+    transition:border-color .2s,box-shadow .2s!important;
+}}
+div[data-testid="stPopover"] > div > button:hover {{
+    border-color:rgba(79,163,255,0.8)!important;
+    box-shadow:0 2px 20px rgba(79,163,255,0.4)!important;
+}}
+div[data-testid="stPopover"] > div > button p {{
+    {"opacity:0!important;font-size:0!important;width:0!important;" if USER_AVATAR else "font-size:1.3em!important;margin:0!important;line-height:40px!important;"}
+}}
+/* Дропдаун — прив'язаний до правого краю viewport, не ламає layout */
+div[data-testid="stPopoverBody"] {{
+    position:fixed!important;
+    right:16px!important;
+    left:auto!important;
+    top:60px!important;
+    padding:6px!important;
+    min-width:220px!important;
+    z-index:9999!important;
+}}
+div[data-testid="stPopoverBody"] .stButton > button {{
+    background:transparent!important;border:none!important;border-radius:8px!important;
+    color:#dde6f5!important;font-size:.88em!important;font-weight:600!important;
+    height:38px!important;width:100%!important;
+    justify-content:flex-start!important;padding:0 10px!important;
+    box-shadow:none!important;text-align:left!important;
+}}
+div[data-testid="stPopoverBody"] .stButton > button:hover {{
+    background:rgba(79,163,255,0.1)!important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+_col_logo, _col_mid, _col_av = st.columns([2, 6, 1])
+with _col_logo:
+    st.markdown('<div class="site-title" style="padding:14px 0 10px;overflow:visible">Sporter</div>',
+                unsafe_allow_html=True)
+with _col_av:
+    with st.popover(_av_text, use_container_width=False):
         if USER_AVATAR:
             st.markdown(
                 f'<div style="display:flex;align-items:center;gap:10px;'
-                f'padding:4px 8px 10px;border-bottom:1px solid rgba(79,163,255,0.12);margin-bottom:6px">'
-                f'<img src="{USER_AVATAR}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0">'
-                f'<div><div style="font-size:.82em;font-weight:600;color:#dde6f5;white-space:nowrap">{USER_NAME}</div>'
-                f'<div style="font-size:.72em;color:#4a6080;white-space:nowrap">{USER_EMAIL}</div></div>'
+                f'padding:6px 8px 12px;border-bottom:1px solid rgba(79,163,255,0.12);margin-bottom:4px">'
+                f'<img src="{USER_AVATAR}" style="width:34px;height:34px;border-radius:50%;flex-shrink:0;'
+                f'border:2px solid rgba(79,163,255,0.3)">'
+                f'<div><div style="font-size:.83em;font-weight:600;color:#dde6f5">{USER_NAME}</div>'
+                f'<div style="font-size:.72em;color:#4a6080">{USER_EMAIL}</div></div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
         if st.button("Настройки", key="open_cfg", use_container_width=True):
             st.session_state["_open_settings"] = True
             st.rerun()
-        st.markdown('<hr style="border:none;border-top:1px solid rgba(79,163,255,0.1);margin:4px 0">', unsafe_allow_html=True)
-        if st.button("→  Выйти", key="logout_btn", use_container_width=True):
+        st.markdown(
+            '<div style="height:1px;background:rgba(79,163,255,0.1);margin:4px 0"></div>',
+            unsafe_allow_html=True,
+        )
+        if st.button("→ Выйти", key="logout_btn", use_container_width=True):
             for k in ["user_email","user_name","user_avatar",
                       "cfg_loaded","cfg_cache","leagues_loaded","leagues_cache"]:
                 st.session_state.pop(k, None)
             st.rerun()
 
-# Відкриваємо settings_modal після rerun (поза popover, щоб не конфліктували)
+# Відкриваємо settings_modal після rerun (поза popover)
 if st.session_state.pop("_open_settings", False):
     settings_modal(
         all_known_leagues=all_known_leagues,

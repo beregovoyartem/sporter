@@ -33,6 +33,11 @@ def render_login_page():
         padding-top:0!important;
         padding-bottom:0!important;
         max-width:460px!important;
+        overflow:visible!important;
+    }
+    /* overflow для всіх батьків лого */
+    .block-container > div, .block-container > div > div {
+        overflow:visible!important;
     }
 
     @keyframes ts{0%{background-position:0%}100%{background-position:300%}}
@@ -51,7 +56,7 @@ def render_login_page():
         font-family:'Pacifico',cursive;
         font-size:4.4em;
         line-height:1.3;
-        padding:6px 8px 12px;
+        padding:6px 8px 18px;
         margin:0 0 6px;
         background:linear-gradient(110deg,#a0650a 0%,#ffd234 25%,#ffe680 50%,#c8860a 75%,#ffd234 100%);
         background-size:300% auto;
