@@ -158,6 +158,16 @@ div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button:hover
 .top-row.h2 .mc{{min-height:260px}}
 .top-row.h1 .mc{{min-height:160px}}
 
+@media(max-width:640px){{
+  .top-row.cols2,.top-row.cols3,.top-row.cols4{{grid-template-columns:1fr!important}}
+  .top-row.h2 .mc,.top-row.h1 .mc{{min-height:unset!important}}
+  .top-row.h2 .mc.feat .tlogo{{width:56px!important;height:56px!important}}
+  .top-row.h2 .mc.feat .tlogo img{{width:50px!important;height:50px!important}}
+  .top-row.h2 .mc.feat .tph{{width:50px!important;height:50px!important}}
+  .top-row.h2 .mc.feat .tname{{font-size:.78em!important;max-width:120px!important}}
+  .matches-grid{{grid-template-columns:1fr!important}}
+}}
+
 /* ── базова картка ── */
 .mc{{
   background:{CARD};border:1px solid rgba(79,163,255,0.13);
