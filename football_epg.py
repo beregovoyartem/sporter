@@ -236,42 +236,62 @@ if st.session_state.pop("_open_settings", False):
         ACTIVE_LGS=ACTIVE_LGS,
     )
 
-# ─── HEADER ───────────────────────────────────────────────────────────────────
-_hdr_col1, _hdr_col2 = st.columns([10, 1])
+# ─── HEADER ───────────────────────────────────────────────────────────────────────────────
+# Аватар справа — звичайна st.button з CSS круглого фото, відкриває sidebar
+if USER_AVATAR:
+    _av_bg = f"background-image:url('{USER_AVATAR}');"
+else:
+    _av_bg = ""
+
+st.markdown(f"""
+<style>
+/* Кнопка-аватар */
+div[data-testid="stButton"]:has(button[kind="avatarBtn"]) button,
+button[kind="avatarBtn"] {{
+    {_av_bg}
+    background-size: cover !important;
+    background-position: center !important;
+    background-color: rgba(10,20,50,0.7) !important;
+    border: 2px solid rgba(79,163,255,0.4) !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    padding: 0 !important;
+    box-shadow: 0 2px 12px rgba(0,60,180,0.3) !important;
+    font-size: {"0px" if USER_AVATAR else "1.3em"} !important;
+    color: transparent !important;
+    margin-top: 10px !important;
+}}
+button[kind="avatarBtn"]:hover {{
+    border-color: rgba(79,163,255,0.8) !important;
+    box-shadow: 0 2px 18px rgba(79,163,255,0.4) !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+_hdr_col1, _hdr_col2 = st.columns([11, 1])
 with _hdr_col1:
     st.markdown(
         '<div class="site-title" style="padding:14px 0 10px;overflow:visible">Sporter</div>',
         unsafe_allow_html=True,
     )
 with _hdr_col2:
-    _av_onclick = (
-        "var b=window.parent.document.querySelector('[data-testid=\"collapsedControl\"]');"
-        "if(b)b.click()"
+    _label = "👤" if not USER_AVATAR else " "
+    if st.button(_label, key="av_btn", help="Меню", type="primary"):
+        st.session_state["_toggle_sidebar"] = True
+        st.rerun()
+
+# JS для відкриття sidebar — виконується після rerun через components.html
+if st.session_state.pop("_toggle_sidebar", False):
+    import streamlit.components.v1 as components
+    components.html(
+        """<script>
+        window.parent.document.querySelector('[data-testid="collapsedControl"]').click();
+        </script>""",
+        height=0,
     )
-    if USER_AVATAR:
-        _av_tag = (
-            '<div style="display:flex;justify-content:flex-end;padding-top:12px">'
-            '<img src="' + USER_AVATAR + '" '
-            'style="width:38px;height:38px;border-radius:50%;cursor:pointer;'
-            'border:2px solid rgba(79,163,255,0.4);object-fit:cover;'
-            'box-shadow:0 2px 12px rgba(0,60,180,0.3)" '
-            'onclick="' + _av_onclick + '" '
-            'title="Меню"></div>'
-        )
-    else:
-        _av_tag = (
-            '<div style="display:flex;justify-content:flex-end;padding-top:12px">'
-            '<span style="font-size:1.5em;cursor:pointer;opacity:.7" '
-            'onclick="' + _av_onclick + '">👤</span></div>'
-        )
-    st.markdown(_av_tag, unsafe_allow_html=True)
-
-
-# ─── HEADER (тільки лого) ─────────────────────────────────────────────────────
-st.markdown(
-    '<div class="site-title" style="padding:18px 0 12px;overflow:visible">Sporter</div>',
-    unsafe_allow_html=True,
-)
 
 # ─── ДАТИ → ТАБКІ → МАТЧІ ────────────────────────────────────────────────────
 today    = now.date()
