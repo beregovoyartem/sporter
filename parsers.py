@@ -110,7 +110,7 @@ def load_livetv_live():
         r = requests.get("https://livetv.sx/alllivesports/",
                          timeout=20, headers=HDR, verify=False)
         r.raise_for_status()
-        soup = BeautifulSoup(r.text, "html.parser")
+        soup = BeautifulSoup(r.content.decode('windows-1251', errors='ignore'), "html.parser")
 
         for img in soup.find_all("img", src=re.compile(r"live\.gif", re.I)):
             nxt = img.find_next_sibling("span", class_="live")
@@ -160,7 +160,7 @@ def load_livetv():
             r = requests.get("https://livetv.sx/allupcomingsports/1/",
                              timeout=tout, headers=HDR, verify=False)
             r.raise_for_status()
-            html = r.text
+            html = r.content.decode('windows-1251', errors='ignore')
             break
         except Exception as e:
             print(f"livetv attempt {attempt}: {e}", flush=True)
@@ -421,7 +421,8 @@ def fetch_logos_for_event(event_id: str, event_url: str) -> tuple[str | None, st
     try:
         r = requests.get(event_url, timeout=10, headers=HDR, verify=False)
         r.raise_for_status()
-        s = BeautifulSoup(r.text, "html.parser")
+        html_text = r.content.decode('windows-1251', errors='ignore')
+        s = BeautifulSoup(html_text, "html.parser")
 
         # ── Спосіб 1: JSON-LD ─────────────────────────────────────────────────
         for script in s.find_all("script", type="application/ld+json"):
@@ -460,7 +461,7 @@ def fetch_logos_for_event(event_id: str, event_url: str) -> tuple[str | None, st
         if not t1 or not t2:
             cdn_logos = re.findall(
                 r'https://cdn\.livetv\d+\.me/img/teams/[^\s"\'<>]+\.gif',
-                r.text,
+                html_text,
             )
             # Фільтруємо унікальні
             seen_cdn = []
@@ -490,7 +491,8 @@ def fetch_event_page(event_id: str, event_url: str, status: str) -> dict:
     try:
         r = requests.get(event_url, timeout=10, headers=HDR, verify=False)
         r.raise_for_status()
-        s = BeautifulSoup(r.text, "html.parser")
+        html_text = r.content.decode('windows-1251', errors='ignore')
+        s = BeautifulSoup(html_text, "html.parser")
 
         score = None
         for img in s.find_all("img", src=re.compile(r"live\.gif", re.I)):
@@ -574,7 +576,7 @@ def fetch_event_page(event_id: str, event_url: str, status: str) -> dict:
         if len(logos) < 2:
             cdn_logos = re.findall(
                 r'https://cdn\.livetv\d+\.me/img/teams/[^\s"\'<>]+\.gif',
-                r.text,
+                html_text,
             )
             for u in cdn_logos:
                 if u not in logos:
