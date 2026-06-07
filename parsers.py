@@ -70,6 +70,13 @@ def logo_uri(url, ttl_days=7):
     except: return None
 
 
+def decode_content(content: bytes) -> str:
+    try:
+        return content.decode("utf-8")
+    except UnicodeDecodeError:
+        return content.decode("windows-1251", errors="ignore")
+
+
 # ─── ХЕЛПЕРИ ─────────────────────────────────────────────────────────────────
 def fix_url(src: str) -> str | None:
     if not src: return None
@@ -110,7 +117,7 @@ def load_livetv_live():
         r = requests.get("https://livetv.sx/alllivesports/",
                          timeout=20, headers=HDR, verify=False)
         r.raise_for_status()
-        soup = BeautifulSoup(r.content.decode('windows-1251', errors='ignore'), "html.parser")
+        soup = BeautifulSoup(decode_content(r.content), "html.parser")
 
         for img in soup.find_all("img", src=re.compile(r"live\.gif", re.I)):
             nxt = img.find_next_sibling("span", class_="live")
@@ -160,7 +167,7 @@ def load_livetv():
             r = requests.get("https://livetv.sx/allupcomingsports/1/",
                              timeout=tout, headers=HDR, verify=False)
             r.raise_for_status()
-            html = r.content.decode('windows-1251', errors='ignore')
+            html = decode_content(r.content)
             break
         except Exception as e:
             print(f"livetv attempt {attempt}: {e}", flush=True)
@@ -421,7 +428,7 @@ def fetch_logos_for_event(event_id: str, event_url: str) -> tuple[str | None, st
     try:
         r = requests.get(event_url, timeout=10, headers=HDR, verify=False)
         r.raise_for_status()
-        html_text = r.content.decode('windows-1251', errors='ignore')
+        html_text = decode_content(r.content)
         s = BeautifulSoup(html_text, "html.parser")
 
         # ── Спосіб 1: JSON-LD ─────────────────────────────────────────────────
@@ -491,7 +498,7 @@ def fetch_event_page(event_id: str, event_url: str, status: str) -> dict:
     try:
         r = requests.get(event_url, timeout=10, headers=HDR, verify=False)
         r.raise_for_status()
-        html_text = r.content.decode('windows-1251', errors='ignore')
+        html_text = decode_content(r.content)
         s = BeautifulSoup(html_text, "html.parser")
 
         score = None
