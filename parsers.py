@@ -358,6 +358,10 @@ def load_livetv():
         mp = re.match(r"^(.+?)\s*[–—]\s*(.+)$", title.strip())
         if mp: t1n, t2n = mp.group(1).strip(), mp.group(2).strip()
 
+        # Видаляємо 3 великі літери в кінці назви команди (коди країн, напр. "Бразилия БРА" -> "Бразилия")
+        t1n = re.sub(r'\s+[А-ЯЁІЇЄҐA-Z]{3}$', '', t1n).strip()
+        t2n = re.sub(r'\s+[А-ЯЁІЇЄҐA-Z]{3}$', '', t2n).strip()
+
         league = meta["league"]
         league_raw = meta["league_raw"]
 
