@@ -182,7 +182,8 @@ def run_matches():
                 time_str = r.get("time")
                 if time_str:
                     dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
-                    dt_fixed = dt - timedelta(hours=3)
+                    dt_naive = dt.replace(tzinfo=None)
+                    dt_fixed = dt_naive - timedelta(hours=3)
                     fixed.append({
                         "event_id": r["event_id"],
                         "time": dt_fixed.isoformat() + "Z",
