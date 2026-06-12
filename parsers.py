@@ -321,7 +321,8 @@ def load_livetv():
             if tm2:
                 try:
                     from datetime import timedelta
-                    n = datetime.now()
+                    # Используем время сервера сайта (UTC + TZ_SITE)
+                    n = datetime.utcnow() + timedelta(hours=TZ_SITE)
                     dt = n.replace(hour=int(tm2.group(1)),
                                    minute=int(tm2.group(2)), second=0, microsecond=0)
                     if "вчера" in evtext.lower():
@@ -348,8 +349,11 @@ def load_livetv():
                     inline_score = f"{mm.group(1)}:{mm.group(2)}"
                     break
 
-        delta = (datetime.now() - dt).total_seconds() / 60
-        if has_live_gif:
+        from datetime import timedelta
+        now_tz = datetime.utcnow() + timedelta(hours=TZ_SITE)
+        delta = (now_tz - dt).total_seconds() / 60
+        # Если Livetv забыли снять иконку, игнорируем live.gif для матчей старше 3 часов (180 минут)
+        if has_live_gif and delta <= 200:
             status = "live"
         elif 0 <= delta <= 115:
             status = "live"
