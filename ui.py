@@ -164,7 +164,7 @@ def build_top_section(day_matches_list: list, show_score: bool = True) -> str:
 @st.dialog("Настройки", width="large")
 def settings_modal(all_known_leagues: list, matches: list,
                    user_email: str,
-                   TZ: int, SHOW_SCORE: bool, DARK: bool,
+                   TZ: int, TZ_AUTO: bool, SHOW_SCORE: bool, DARK: bool,
                    SHOW_INTERESTING: bool, BOOST_UKRAINE: bool,
                    ACTIVE_LGS: set):
     from db import save_cfg, save_known_leagues
@@ -178,8 +178,8 @@ def settings_modal(all_known_leagues: list, matches: list,
         "(UTC-1) Азорские острова",
         "(UTC+0) Лондон, Лиссабон",
         "(UTC+1) Варшава, Берлин, Рим",
-        "(UTC+2) Хельсинки, Афины",
-        "(UTC+3) Киев, Стамбул, Эр-Рияд",
+        "(UTC+2) Киев, Хельсинки, Афины",
+        "(UTC+3) Москва, Стамбул, Эр-Рияд",
         "(UTC+4) Баку, Дубай, Тбилиси",
         "(UTC+5) Ташкент, Карачи",
         "(UTC+6) Алматы, Дакка",
@@ -192,7 +192,8 @@ def settings_modal(all_known_leagues: list, matches: list,
     ]
     TZ_BASE = -5
     tz_idx = max(0, min(TZ - TZ_BASE, len(TZ_OPTIONS) - 1))
-    new_tz_label    = st.selectbox("Мой часовой пояс", TZ_OPTIONS, index=tz_idx, key="m_tz")
+    new_tz_auto     = st.checkbox("Автоопределение таймзоны", value=TZ_AUTO, key="m_tzauto")
+    new_tz_label    = st.selectbox("Мой часовой пояс", TZ_OPTIONS, index=tz_idx, key="m_tz", disabled=new_tz_auto)
     new_tz          = TZ_OPTIONS.index(new_tz_label) + TZ_BASE
     new_score       = st.checkbox("Показывать счёт", value=SHOW_SCORE, key="m_sc")
     new_interesting = st.checkbox(
@@ -253,6 +254,7 @@ def settings_modal(all_known_leagues: list, matches: list,
             save_known_leagues(user_email, set(all_known_leagues))
             save_cfg(user_email, {
                 "tz_offset":        new_tz,
+                "tz_auto":          new_tz_auto,
                 "show_score":       new_score,
                 "dark_theme":       new_dark,
                 "show_interesting": new_interesting,

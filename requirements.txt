@@ -5,3 +5,4 @@ urllib3
 streamlit-oauth
 PyJWT
 supabase
+streamlit-javascript==0.1.5

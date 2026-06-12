@@ -43,12 +43,19 @@ USER_AVATAR = _user["avatar"]
 
 # ─── НАЛАШТУВАННЯ ────────────────────────────────────────────────────────────
 CFG              = load_cfg(USER_EMAIL)
-TZ               = CFG["tz_offset"]
+TZ               = CFG.get("tz_offset", 3)
+TZ_AUTO          = CFG.get("tz_auto", True)
 SHOW_SCORE       = CFG["show_score"]
 DARK             = CFG["dark_theme"]
 ACTIVE_LGS       = set(CFG.get("active_leagues", []))
 SHOW_INTERESTING = CFG.get("show_interesting", True)
 BOOST_UKRAINE    = CFG.get("boost_ukraine", True)
+
+if TZ_AUTO:
+    from streamlit_javascript import st_javascript
+    client_tz_offset_mins = st_javascript("new Date().getTimezoneOffset();")
+    if client_tz_offset_mins is not None and type(client_tz_offset_mins) in (int, float):
+        TZ = -int(client_tz_offset_mins) // 60
 
 # ─── CSS ─────────────────────────────────────────────────────────────────────
 BG = """
@@ -239,7 +246,7 @@ if st.session_state.pop("_open_settings", False):
         all_known_leagues=all_known_leagues,
         matches=matches,
         user_email=USER_EMAIL,
-        TZ=TZ, SHOW_SCORE=SHOW_SCORE, DARK=DARK,
+        TZ=TZ, TZ_AUTO=TZ_AUTO, SHOW_SCORE=SHOW_SCORE, DARK=DARK,
         SHOW_INTERESTING=SHOW_INTERESTING, BOOST_UKRAINE=BOOST_UKRAINE,
         ACTIVE_LGS=ACTIVE_LGS,
     )

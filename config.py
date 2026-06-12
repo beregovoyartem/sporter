@@ -6,6 +6,7 @@ config.py — константи застосунку Sporter
 # ─── ДЕФОЛТНІ НАЛАШТУВАННЯ ───────────────────────────────────────────────────
 DEFAULT_CFG = {
     "tz_offset": 3,
+    "tz_auto": True,
     "show_score": True,
     "dark_theme": True,
     "active_leagues": [],
