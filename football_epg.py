@@ -158,13 +158,24 @@ for gm in raw_matches:
     if not gurl and not gm.get("always_show") and not is_top_final and not user_selected:
         continue
 
+    status = gm.get("status", "upcoming")
+    try:
+        time_str = gm["time"]
+        dt_utc = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+        dt_utc_naive = dt_utc.replace(tzinfo=None)
+        if (datetime.utcnow() - dt_utc_naive) > timedelta(hours=3, minutes=30):
+            status = "finished"
+    except:
+        pass
+
     matches.append({
         **gm,
+        "status":     status,
         "time_dt":    dt,
         "gooool_url": gurl,
         "is_top":     is_top_final,
         "interest":   i_score,
-        "score":      gm.get("score") if gm.get("status") != "upcoming" else None,
+        "score":      gm.get("score") if status != "upcoming" else None,
     })
 
 matches.sort(key=lambda x: x["time_dt"])
