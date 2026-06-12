@@ -159,18 +159,25 @@ def load_livetv():
     cached = cache_get(ck, ttl=600)
     if cached: return cached
 
-    html = None
-    for attempt, (tout, delay) in enumerate([(30,0),(45,3),(60,5)], 1):
-        try:
-            if delay:
-                import time; time.sleep(delay)
-            r = requests.get("https://livetv.sx/allupcomingsports/1/",
-                             timeout=tout, headers=HDR, verify=False)
-            r.raise_for_status()
-            html = decode_content(r.content)
-            break
-        except Exception as e:
-            print(f"livetv attempt {attempt}: {e}", flush=True)
+    html = ""
+    urls = [
+        f"https://livetv.sx/allupcomingsports/1/",
+        f"https://livetv.sx/allupcomingsports/1/2/",
+        f"https://livetv.sx/allupcomingsports/1/3/",
+        f"https://livetv.sx/allupcomingsports/1/4/",
+        f"https://livetv.sx/allupcomingsports/1/5/"
+    ]
+    for url in urls:
+        for attempt, (tout, delay) in enumerate([(30,0),(45,3),(60,5)], 1):
+            try:
+                if delay:
+                    import time; time.sleep(delay)
+                r = requests.get(url, timeout=tout, headers=HDR, verify=False)
+                r.raise_for_status()
+                html += decode_content(r.content)
+                break
+            except Exception as e:
+                print(f"livetv {url} attempt {attempt}: {e}", flush=True)
 
     if not html:
         cache_set(ck, {"top":[], "all":[]})

@@ -171,6 +171,29 @@ def fetch_logos_batch(matches_need_logos: list) -> dict:
 def run_matches():
     print(f"[{datetime.utcnow().isoformat()}] Парсинг матчів...", flush=True)
 
+    try:
+        print("Running one-time DB time fix...", flush=True)
+        rows_db = sb_select("matches", "select=event_id,time,updated_at")
+        fixed = []
+        fix_cutoff = "2026-06-12T21:28:00"
+        for r in rows_db:
+            upd = r.get("updated_at", "")
+            if upd and upd < fix_cutoff:
+                time_str = r.get("time")
+                if time_str:
+                    dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+                    dt_fixed = dt - timedelta(hours=3)
+                    fixed.append({
+                        "event_id": r["event_id"],
+                        "time": dt_fixed.isoformat() + "Z",
+                        "updated_at": datetime.utcnow().isoformat() + "Z"
+                    })
+        if fixed:
+            print(f"Fixing {len(fixed)} old matches...", flush=True)
+            sb_upsert("matches", fixed)
+    except Exception as e:
+        print(f"DB fix error: {e}")
+
     ltv = load_livetv()
     all_matches = ltv.get("top", []) + ltv.get("all", [])
     print(f"  Знайдено {len(all_matches)} матчів", flush=True)
