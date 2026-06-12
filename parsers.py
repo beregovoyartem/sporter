@@ -383,8 +383,11 @@ def load_livetv():
             any(k in title.lower() for k in UKR_KW)
         )
 
+        # dt — это локальное время матча на сайте Livetv (UTC+TZ_SITE)
+        # Перед сохранением в БД конвертируем его в чистый UTC
+        dt_utc = dt - timedelta(hours=TZ_SITE)
         return {
-            "time": dt.isoformat(), "title": title,
+            "time": dt_utc.isoformat() + "Z", "title": title,
             "team1": t1n, "team2": t2n,
             "url": href, "event_id": eid,
             "status": status, "league": league, "league_raw": league_raw,
