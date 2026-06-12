@@ -320,19 +320,27 @@ def load_livetv():
             tm2 = re.search(r"(\d{1,2}):(\d{2})", evtext)
             if tm2:
                 try:
+                    from datetime import timedelta
                     n = datetime.now()
                     dt = n.replace(hour=int(tm2.group(1)),
                                    minute=int(tm2.group(2)), second=0, microsecond=0)
+                    if "вчера" in evtext.lower():
+                        dt -= timedelta(days=1)
+                    elif "завтра" in evtext.lower():
+                        dt += timedelta(days=1)
+                    elif (dt - n).total_seconds() > 12 * 3600:
+                        # If time is 23:00 and now is 01:00, it might be yesterday without 'вчера' label
+                        dt -= timedelta(days=1)
                 except: pass
         if dt is None: return None
 
-        td_row = td.find_parent("tr") or td
-        td_html = str(td_row)
+        # Ограничиваем поиск live.gif только текущей ячейкой (а не всей строкой tr)
+        td_html = str(td)
         has_live_gif = "live.gif" in td_html or "liveicon" in td_html.lower()
 
         inline_score = None
         if has_live_gif:
-            for el in td_row.find_all(["td", "span", "div"]):
+            for el in td.find_all(["td", "span", "div"]):
                 if el.find("a"): continue
                 txt = el.get_text(strip=True)
                 mm = re.fullmatch(r"(\d{1,2})\s*[:\-]\s*(\d{1,2})", txt)
