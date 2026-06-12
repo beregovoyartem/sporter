@@ -62,21 +62,40 @@ def render_admin_page(user_email: str):
     st.markdown("### Настройки")
 
     TZ_OPTIONS = [
-        ("(UTC-5) Нью-Йорк", -5), ("(UTC-4) Каракас", -4), ("(UTC-3) Буэнос-Айрес", -3),
-        ("(UTC-2) Атлантика", -2), ("(UTC-1) Азоры", -1), ("(UTC+0) Лондон", 0),
-        ("(UTC+1) Берлин", 1), ("(UTC+2) Киев", 2), ("(UTC+3) Москва", 3),
-        ("(UTC+4) Дубай", 4), ("(UTC+5) Карачи", 5), ("(UTC+6) Алматы", 6),
-        ("(UTC+7) Бангкок", 7), ("(UTC+8) Пекин", 8), ("(UTC+9) Токио", 9),
-        ("(UTC+10) Сидней", 10), ("(UTC+11) Магадан", 11), ("(UTC+12) Окленд", 12),
+        "(UTC-5) Нью-Йорк, Торонто",
+        "(UTC-4) Галифакс, Каракас",
+        "(UTC-3) Буэнос-Айрес, Бразилиа",
+        "(UTC-2) Середина Атлантики",
+        "(UTC-1) Азорские острова",
+        "(UTC+0) Лондон, Лиссабон",
+        "(UTC+1) Варшава, Берлин, Рим",
+        "(UTC+2) Хельсинки, Афины",
+        "(UTC+3) Киев, Стамбул, Эр-Рияд",
+        "(UTC+4) Баку, Дубай, Тбилиси",
+        "(UTC+5) Ташкент, Карачи",
+        "(UTC+6) Алматы, Дакка",
+        "(UTC+7) Бангкок, Джакарта",
+        "(UTC+8) Пекин, Сингапур",
+        "(UTC+9) Токио, Сеул",
+        "(UTC+10) Сидней, Владивосток",
+        "(UTC+11) Магадан",
+        "(UTC+12) Окленд, Фиджи",
     ]
-    tz_labels = [t[0] for t in TZ_OPTIONS]
-    tz_values = [t[1] for t in TZ_OPTIONS]
-
-    tz_label        = st.selectbox("Часовой пояс", tz_labels, index=7, key="adm_tz")
-    tz_val          = tz_values[tz_labels.index(tz_label)]
+    TZ_BASE = -5
+    
+    new_tz_auto     = st.checkbox("Автоопределение таймзоны", value=True, key="adm_tzauto")
+    tz_label        = st.selectbox("Часовой пояс", TZ_OPTIONS, index=8, key="adm_tz", disabled=new_tz_auto)
+    tz_val          = TZ_OPTIONS.index(tz_label) + TZ_BASE
+    
     new_score       = st.checkbox("Показывать счёт", value=True, key="adm_score")
-    new_interesting = st.checkbox("Топ-клубы в главные матчи", value=True, key="adm_int")
-    new_ukraine     = st.checkbox("Приоритет украинским командам", value=True, key="adm_ukr")
+    new_interesting = st.checkbox(
+        "Интересные команды — выносить матчи топ-100 клубов в «Главные матчи дня»",
+        value=True, key="adm_int",
+    )
+    new_ukraine     = st.checkbox(
+        "Приоритет украинским командам в международных турнирах (ЛЧ, ЛЕ, сборные и т.д.)",
+        value=True, key="adm_ukr",
+    )
 
     # ── Ліги чекбоксами (як в settings_modal) ────────────────────────────────
     st.markdown("**Лиги** (пусто = показывать все)")
@@ -167,6 +186,7 @@ def render_admin_page(user_email: str):
     ):
         cfg = {
             "tz_offset":        tz_val,
+            "tz_auto":          new_tz_auto,
             "show_score":       new_score,
             "dark_theme":       True,
             "show_interesting": new_interesting,
