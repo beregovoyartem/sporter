@@ -172,28 +172,33 @@ def run_matches():
     print(f"[{datetime.utcnow().isoformat()}] Парсинг матчів...", flush=True)
 
     try:
-        print("Running one-time DB time fix...", flush=True)
-        rows_db = sb_select("matches", "select=event_id,time,updated_at")
-        fixed = []
-        fix_cutoff = "2026-06-12T21:28:00"
-        for r in rows_db:
-            upd = r.get("updated_at", "")
-            if upd and upd < fix_cutoff:
-                time_str = r.get("time")
-                if time_str:
-                    dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
-                    dt_naive = dt.replace(tzinfo=None)
-                    dt_fixed = dt_naive - timedelta(hours=3)
-                    fixed.append({
-                        "event_id": r["event_id"],
-                        "time": dt_fixed.isoformat() + "Z",
-                        "updated_at": datetime.utcnow().isoformat() + "Z"
-                    })
-        if fixed:
-            print(f"Fixing {len(fixed)} old matches...", flush=True)
-            sb_upsert("matches", fixed)
+        print("Running DB cleanup...", flush=True)
+        now_utc = datetime.utcnow()
+        # 1. Delete matches older than 2 days
+        cutoff_del = (now_utc - timedelta(days=2)).isoformat() + "Z"
+        del_r = requests.delete(
+            f"{SUPABASE_URL}/rest/v1/matches?time=lt.{cutoff_del}",
+            headers=sb_headers(),
+            timeout=15
+        )
+        print(f"Deleted old matches (older than 2 days): status {del_r.status_code}", flush=True)
+
+        # 2. Mark matches starting > 3.5 hours ago that are still 'live' or 'upcoming' as 'finished'
+        cutoff_fin = (now_utc - timedelta(hours=3, minutes=30)).isoformat() + "Z"
+        old_active = sb_select("matches", f"time=lt.{cutoff_fin}&status=in.(live,upcoming)&select=event_id")
+        if old_active:
+            print(f"Marking {len(old_active)} old active matches as finished...", flush=True)
+            fin_rows = [
+                {
+                    "event_id": r["event_id"],
+                    "status": "finished",
+                    "updated_at": now_utc.isoformat() + "Z"
+                }
+                for r in old_active
+            ]
+            sb_upsert("matches", fin_rows)
     except Exception as e:
-        print(f"DB fix error: {e}")
+        print(f"DB cleanup error: {e}", flush=True)
 
     ltv = load_livetv()
     all_matches = ltv.get("top", []) + ltv.get("all", [])

@@ -277,3 +277,31 @@ for day_tab, day in zip(day_tabs, sorted_days):
                     grid += render_card(m, m.get("gooool_url"), show_score=SHOW_SCORE)
                 grid += "</div>"
                 st.markdown(grid, unsafe_allow_html=True)
+
+
+# ─── РАЗДЕЛ ОТЛАДКИ (DEBUG) ──────────────────────────────────────────────────
+with st.expander("🔍 Отладка базы данных (Debug DB)"):
+    st.write(f"Текущее UTC время сервера: `{datetime.utcnow().isoformat()}Z`")
+    st.write(f"Текущее время по выбранной таймзоне (TZ={TZ}): `{now.isoformat()}`")
+    
+    try:
+        from supabase import create_client
+        sb_client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+        meta_res = sb_client.table("parse_meta").select("*").execute()
+        st.write("Метаданные парсера (последние запуски):", meta_res.data)
+    except Exception as e:
+        st.write("Не удалось загрузить метаданные:", e)
+        
+    st.write(f"Всего загружено записей из БД: {len(raw_matches)}")
+    if raw_matches:
+        debug_list = []
+        for r in raw_matches[:20]:
+            debug_list.append({
+                "Event ID": r.get("event_id"),
+                "Название": r.get("title"),
+                "Время в БД (UTC)": r.get("time"),
+                "Статус": r.get("status"),
+                "Обновлено": r.get("updated_at")
+            })
+        st.table(debug_list)
+
