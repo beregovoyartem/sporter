@@ -671,8 +671,12 @@ def find_gooool(t1: str, t2: str, glist: list) -> str | None:
     def sim(a, b):
         for va in variants(a):
             for vb in variants(b):
-                if len(va) >= 4 and len(vb) >= 4 and (va[:5] in vb or vb[:5] in va):
-                    return True
+                if len(va) < 4 or len(vb) < 4:
+                    if va == vb or va in vb or vb in va:
+                        return True
+                else:
+                    if va[:5] in vb or vb[:5] in va:
+                        return True
         return False
     for gm in glist:
         mp = re.match(r"^(.+?)\s*[-—–]\s*(.+)$", gm["title"].strip())
