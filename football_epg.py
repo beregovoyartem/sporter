@@ -142,6 +142,10 @@ for gm in raw_matches:
     except:
         continue
 
+    # Скрываем матчи, которые были раньше "вчера" по местному времени пользователя
+    if dt.date() < (now.date() - timedelta(days=1)):
+        continue
+
     league = gm.get("league", "")
     if not league_allowed(league):
         continue
