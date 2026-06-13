@@ -267,7 +267,7 @@ days_ua  = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"]
 by_day: defaultdict = defaultdict(list)
 for m in matches:
     by_day[m["time_dt"].date()].append(m)
-sorted_days = sorted(by_day.keys(), key=lambda d: (d < today, d))
+sorted_days = sorted(by_day.keys())
 
 if not sorted_days:
     st.warning("Матчей не найдено. Проверьте настройки лиг или обновите данные.")
