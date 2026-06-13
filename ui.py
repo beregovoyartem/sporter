@@ -12,7 +12,7 @@ from config import FLAG_MAP, UCL_SVG, UEL_SVG, UECL_SVG, LEAGUE_POP, TZ_SITE
 def lhtml(url: str) -> str:
     """Рендерить логотип команди напряму з URL."""
     if url:
-        return (f'<img src="{url}" loading="lazy" '
+        return (f'<img src="{url}" '
                 f'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
                 f'<div class="tph" style="display:none">⚽</div>')
     return '<div class="tph">⚽</div>'
