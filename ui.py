@@ -88,12 +88,12 @@ def render_card(m: dict, gurl: str | None = None, feat: bool = False,
 
     if is_live:
         if score and show_score:
-            center = (f'<div style="display:flex;flex-direction:column;align-items:center;gap:12px;flex-shrink:0">'
+            center = (f'<div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0">'
                       f'<div class="vs-b"><div class="live-badge">LIVE</div>'
                       f'<div class="sc-live">{score}</div></div>'
                       f'{ai_prognoz}</div>')
         else:
-            center = (f'<div style="display:flex;flex-direction:column;align-items:center;gap:12px;flex-shrink:0">'
+            center = (f'<div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0">'
                       f'<div class="vs-b"><div class="live-badge">LIVE</div></div>'
                       f'{ai_prognoz}</div>')
     elif is_fin and score and show_score:
