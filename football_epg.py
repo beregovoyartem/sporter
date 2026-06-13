@@ -95,7 +95,6 @@ def match_interest_score(team1: str, team2: str, league: str = "") -> int:
     return base
 
 # ─── ЗАВАНТАЖЕННЯ ДАНИХ З SUPABASE ───────────────────────────────────────────
-pb = st.progress(0, text="Загрузка матчей...")
 
 @st.cache_data(ttl=120)
 def _load_matches_from_db() -> list:
@@ -119,8 +118,8 @@ def _load_matches_from_db() -> list:
         print(f"DB load error: {e}", flush=True)
         return []
 
-raw_matches = _load_matches_from_db()
-pb.progress(70, text="Обработка...")
+with st.spinner("Загрузка матчей..."):
+    raw_matches = _load_matches_from_db()
 
 now = datetime.utcnow() + timedelta(hours=TZ)
 
@@ -193,8 +192,7 @@ for gm in raw_matches:
 
 matches.sort(key=lambda x: x["time_dt"])
 
-pb.progress(100, text="Готово!")
-pb.empty()
+
 
 # ─── HEADER ──────────────────────────────────────────────────────────────────
 # Спочатку кнопки (зверху), потім аватар + лого
