@@ -277,7 +277,7 @@ div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button:hover
 }}
 .live-badge{{font-size:.52em;font-weight:800;letter-spacing:2px;
   color:#fff;background:linear-gradient(90deg,#c8001a,#ff3355);
-  padding:1px 7px;border-radius:3px;
+  padding:1px 5px 1px 7px;border-radius:3px;
   animation:pulse-badge 1.4s ease-in-out infinite}}
 @keyframes pulse-badge{{
   0%,100%{{opacity:1;box-shadow:0 0 6px rgba(255,50,80,.5)}}
