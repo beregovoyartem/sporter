@@ -53,9 +53,15 @@ BOOST_UKRAINE    = CFG.get("boost_ukraine", True)
 
 if TZ_AUTO:
     from streamlit_javascript import st_javascript
-    client_tz_offset_mins = st_javascript("new Date().getTimezoneOffset();")
-    if client_tz_offset_mins is not None and type(client_tz_offset_mins) in (int, float):
-        TZ = -int(client_tz_offset_mins) // 60
+    tz_resp = st_javascript("String(new Date().getTimezoneOffset())")
+    if tz_resp == 0:
+        # Prevent double-rendering and UI jerking while waiting for JS
+        st.stop()
+    if tz_resp and isinstance(tz_resp, str):
+        try:
+            TZ = -int(tz_resp) // 60
+        except ValueError:
+            pass
 
 # ─── CSS ─────────────────────────────────────────────────────────────────────
 BG = """
