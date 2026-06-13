@@ -164,8 +164,14 @@ def render_admin_page(user_email: str):
 
     ugen = st.session_state.adm_usr_gen
     selected_users = []
+    
+    unique_users = {}
     for u in users:
-        key = f"adm_u_{u['email']}_{ugen}"
+        if u['email'] not in unique_users:
+            unique_users[u['email']] = u
+            
+    for i, u in enumerate(unique_users.values()):
+        key = f"adm_u_{u['email']}_{i}_{ugen}"
         checked = st.checkbox(
             f"**{u.get('name', u['email'])}** — `{u['email']}`",
             value=default_usr,
