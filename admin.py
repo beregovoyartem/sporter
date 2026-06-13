@@ -20,7 +20,7 @@ def is_admin(email: str) -> bool:
 
 
 def render_admin_page(user_email: str):
-    st.markdown("## ⚙ Адмін-панель")
+    st.markdown("## ⚙ Админ")
     st.caption("Управление пользователями и настройками")
     st.divider()
 
