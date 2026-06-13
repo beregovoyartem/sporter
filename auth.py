@@ -62,17 +62,35 @@ def _sb_clear_session(email: str):
         print(f"Session clear error: {e}", flush=True)
     try:
         st.query_params.clear()
+        from streamlit_cookies_controller import CookieController
+        controller = CookieController()
+        controller.remove("sporter_token")
     except Exception:
         pass
 
 
 def _restore_from_token():
-    """При завантаженні сторінки відновлює сесію з ?t= параметра."""
+    """При завантаженні сторінки відновлює сесію з ?t= параметра або cookie."""
     if st.session_state.get("user_email"):
         return
+        
+    try:
+        from streamlit_cookies_controller import CookieController
+        controller = CookieController()
+        cookie_token = controller.get("sporter_token")
+    except Exception:
+        cookie_token = None
+
     token = st.query_params.get("t", "")
+    
+    # Try to use token from cookie if URL has no token
+    if not token and cookie_token:
+        token = cookie_token
+        st.query_params["t"] = token
+
     if not token or not _sb_available():
         return
+        
     try:
         from supabase import create_client
         sb = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
@@ -82,6 +100,13 @@ def _restore_from_token():
             st.session_state["user_email"]  = row["email"]
             st.session_state["user_name"]   = row.get("name", row["email"])
             st.session_state["user_avatar"] = row.get("avatar", "")
+            
+            # Save valid token to cookie if it's missing or different
+            if cookie_token != token:
+                try:
+                    controller.set("sporter_token", token, max_age=86400*30)
+                except Exception:
+                    pass
     except Exception as e:
         print(f"Session restore error: {e}", flush=True)
 
