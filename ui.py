@@ -18,6 +18,22 @@ def lhtml(url: str) -> str:
     return '<div class="tph">⚽</div>'
 
 
+def get_skeletons_html(count: int = 3) -> str:
+    """Генерує HTML для карточок-скелетонів (під час завантаження)."""
+    sk_card = (
+        '<div class="sk-card">'
+        '<div class="sk-shimmer sk-hdr"></div>'
+        '<div class="sk-tms">'
+        '<div class="sk-tm"><div class="sk-shimmer sk-lg"></div><div class="sk-shimmer sk-nm"></div></div>'
+        '<div class="sk-shimmer sk-vs"></div>'
+        '<div class="sk-tm"><div class="sk-shimmer sk-lg"></div><div class="sk-shimmer sk-nm"></div></div>'
+        '</div>'
+        '<div class="sk-ftr"><div class="sk-shimmer sk-time"></div><div class="sk-shimmer sk-lnk"></div></div>'
+        '</div>'
+    )
+    return f'<div>{"".join([sk_card for _ in range(count)])}</div>'
+
+
 def league_badge_html(name: str) -> str:
     code = FLAG_MAP.get(name, "")
     if code == "ucl":  return f'<span class="lg-ico">{UCL_SVG}</span>'

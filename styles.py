@@ -327,5 +327,19 @@ div[data-testid="stTabs"] button[aria-selected="true"]{{color:#4fa3ff!important}
   max-width:860px!important;width:90vw!important;
 }}
 [data-testid="stDialog"] h3{{color:#dde6f5!important;font-size:1.1em!important}}
+
+/* ── Skeletons ── */
+.sk-card{{background:{CARD};border:1px solid rgba(79,163,255,0.05);border-radius:14px;padding:12px 14px 10px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}}
+.sk-shimmer{{background:linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 75%);background-size:400% 100%;animation:shimmer 1.5s ease-in-out infinite;border-radius:8px}}
+@keyframes shimmer{{0%{{background-position:100% 50%}}100%{{background-position:0 50%}}}}
+.sk-hdr{{width:40%;height:14px}}
+.sk-tms{{display:flex;justify-content:space-between;align-items:center;margin:8px 0 11px}}
+.sk-tm{{display:flex;flex-direction:column;align-items:center;gap:12px;flex:1}}
+.sk-lg{{width:44px;height:44px;border-radius:50%}}
+.sk-nm{{width:70px;height:10px}}
+.sk-vs{{width:40px;height:18px;border-radius:10px}}
+.sk-ftr{{display:flex;justify-content:space-between;margin-top:2px}}
+.sk-time{{width:40px;height:10px}}
+.sk-lnk{{width:80px;height:10px}}
 </style>
 """

@@ -27,7 +27,7 @@ from config  import (TZ_SITE, TOP_CLUBS, YOUTH_KEYWORDS, UKR_TEAM_KW,
                      UKR_BOOST_LEAGUES, LEAGUE_POP)
 from db      import load_cfg, save_cfg, load_known_leagues, save_known_leagues, save_global_leagues
 from styles  import get_css
-from ui      import render_card, build_top_section, settings_modal, league_sort_key
+from ui      import render_card, build_top_section, settings_modal, league_sort_key, get_skeletons_html
 from admin   import render_admin_page, is_admin
 
 # ─── АВТОРИЗАЦІЯ ─────────────────────────────────────────────────────────────
@@ -118,8 +118,12 @@ def _load_matches_from_db() -> list:
         print(f"DB load error: {e}", flush=True)
         return []
 
-with st.spinner("Загрузка матчей..."):
-    raw_matches = _load_matches_from_db()
+sk_ph = st.empty()
+sk_ph.markdown(get_skeletons_html(3), unsafe_allow_html=True)
+
+raw_matches = _load_matches_from_db()
+
+sk_ph.empty()
 
 now = datetime.utcnow() + timedelta(hours=TZ)
 
