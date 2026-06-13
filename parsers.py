@@ -123,7 +123,7 @@ def load_livetv_live():
             nxt = img.find_next_sibling("span", class_="live")
             if not nxt:
                 parent = img.parent
-                nxt = parent.find("span", class_="live") if parent else None
+                nxt = parent.find_next_sibling("span", class_="live") if parent else None
             if not nxt: continue
             txt = nxt.get_text(strip=True)
             mm = re.search(r"^(\d{1,3}):(\d{1,3})$", txt)
@@ -531,8 +531,6 @@ def fetch_event_page(event_id: str, event_url: str, status: str) -> dict:
         for img in s.find_all("img", src=re.compile(r"live\.gif", re.I)):
             td = img.find_parent("td")
             if not td: continue
-            a = td.find("a", href=re.compile(rf"/eventinfo/{event_id}"))
-            if not a: continue
             span = td.find("span", class_="live")
             if not span: continue
             txt = span.get_text(strip=True)
