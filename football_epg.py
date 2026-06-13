@@ -170,7 +170,13 @@ for gm in raw_matches:
         time_str = gm["time"]
         dt_utc = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
         dt_utc_naive = dt_utc.replace(tzinfo=None)
-        if (datetime.utcnow() - dt_utc_naive) > timedelta(hours=3, minutes=30):
+        
+        delta_mins = (datetime.utcnow() - dt_utc_naive).total_seconds() / 60
+        if status == "live" and delta_mins > 200:
+            status = "finished"
+        elif 0 <= delta_mins <= 115:
+            status = "live"
+        elif delta_mins > 115:
             status = "finished"
     except:
         pass
