@@ -266,7 +266,7 @@ div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button:hover
   border:1.5px dashed rgba(79,163,255,0.17);display:flex;align-items:center;
   justify-content:center;font-size:1.2em;opacity:.4}}
 .tname{{font-size:.72em;font-weight:600;color:{CLR};text-align:center;
-  line-height:1.25;word-break:break-word;max-width:115px}}
+  line-height:1.25;word-break:break-word;width:100%;max-width:100%;padding:0 4px}}
 .vs-b{{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0}}
 .vs{{font-size:.58em;font-weight:800;color:rgba(79,163,255,0.22);letter-spacing:1px}}
 .sc-live{{font-size:1.28em;font-weight:900;color:#ff4455;letter-spacing:3px;
