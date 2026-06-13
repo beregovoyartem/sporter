@@ -258,7 +258,7 @@ div[data-testid="stHorizontalBlock"]:has(+ div .sp-hdr) .stButton > button:hover
 @keyframes lg{{0%,100%{{box-shadow:0 0 7px rgba(190,0,35,.45)}}50%{{box-shadow:0 0 15px rgba(255,35,55,.9)}}}}
 
 /* ── команди ── */
-.teams{{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:8px 0 11px;flex:1}}
+.teams{{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:8px 0 13px;flex:1}}
 .team{{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0}}
 .tlogo{{width:48px;height:48px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}}
 .tlogo img{{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.65))}}
