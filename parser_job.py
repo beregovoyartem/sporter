@@ -326,12 +326,15 @@ def run_matches():
         print("  Шукаємо повтори матчів на gooool365.com...", flush=True)
         replay_list = load_gooool_replays(max_pages=5)
         if replay_list:
-            # Отримуємо завершені матчі з БД, які ще не мають replay_url
-            finished_rows = sb_select("matches", "status=eq.finished&select=event_id,team1,team2,time,league")
+                        # Отримуємо завершені матчі з БД, які ще не мають replay_url
+            finished_rows = sb_select("matches", "status=eq.finished&select=event_id,team1,team2,time,league,replay_url")
             print(f"  Завершених матчів без повтора: {len(finished_rows)}", flush=True)
 
-            replay_updates = []
+                        replay_updates = []
             for fr in finished_rows:
+                if fr.get("replay_url"):
+                    continue  # вже є повтор
+
                 eid = fr.get("event_id", "")
                 t1 = fr.get("team1", "")
                 t2 = fr.get("team2", "")
@@ -503,7 +506,7 @@ if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "matches"
     t0 = time.time()
 
-    if mode == "matches":
+                    if mode == "matches":
         run_matches()
     elif mode == "live":
         run_live()
