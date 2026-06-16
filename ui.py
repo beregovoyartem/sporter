@@ -80,10 +80,23 @@ def render_card(m: dict, gurl: str | None = None, feat: bool = False,
     )
     ai_url = 'https://www.google.com/search?q=' + urllib.parse.quote(ai_query) + '&udm=50'
 
+    # Ссылка на повтор для завершённых матчей
+    replay_url = m.get("replay_url") if is_fin else None
+
     btn_ltv = f'<a class="wbtn btn-ltv" href="{m["url"]}" target="_blank">Livetv</a>'
-    btn_go  = f'<a class="wbtn btn-go" href="{gurl}" target="_blank">Gooool365</a>' if gurl else ""
-    sep     = '<span style="color:rgba(79,163,255,0.25);font-size:.65em">|</span>'
-    links   = f'{btn_go} {sep} {btn_ltv}' if gurl else btn_ltv
+
+    if replay_url:
+        # Для завершённых матчей показываем кнопку "Повтор" вместо Gooool365
+        btn_replay = f'<a class="wbtn" href="{replay_url}" target="_blank">Повтор</a>'
+        sep     = '<span style="color:rgba(79,163,255,0.25);font-size:.65em">|</span>'
+        links   = f'{btn_replay} {sep} {btn_ltv}'
+    elif gurl:
+        btn_go  = f'<a class="wbtn btn-go" href="{gurl}" target="_blank">Gooool365</a>'
+        sep     = '<span style="color:rgba(79,163,255,0.25);font-size:.65em">|</span>'
+        links   = f'{btn_go} {sep} {btn_ltv}'
+    else:
+        links   = btn_ltv
+
     ai_prognoz = f'<a class="wbtn btn-ai-footer" href="{ai_url}" target="_blank">ПРОГНОЗ</a>'
 
     if is_live:

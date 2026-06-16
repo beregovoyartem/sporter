@@ -130,7 +130,7 @@ class _MockST:
 
 sys.modules["streamlit"] = _MockST()
 
-from parsers import load_livetv, load_livetv_live, load_gooool_urls, find_gooool, fetch_logos_for_event
+from parsers import load_livetv, load_livetv_live, load_gooool_urls, find_gooool, fetch_logos_for_event, load_gooool_replays, find_replay
 
 
 # ─── ЛОГОТИПИ: ПАРАЛЕЛЬНИЙ ЗАВАНТАЖУВАЧ ──────────────────────────────────────
@@ -321,6 +321,50 @@ def run_matches():
     if rows_without_logos:
         sb_upsert("matches", rows_without_logos)
 
+        # ── Пошук повтором для завершених матчів ─────────────────────────────────
+    try:
+        print("  Шукаємо повтори матчів на gooool365.com...", flush=True)
+        replay_list = load_gooool_replays(max_pages=5)
+        if replay_list:
+            # Отримуємо завершені матчі з БД, які ще не мають replay_url
+            finished_rows = sb_select("matches", "status=eq.finished&select=event_id,team1,team2,time,league")
+            print(f"  Завершених матчів без повтора: {len(finished_rows)}", flush=True)
+
+            replay_updates = []
+            for fr in finished_rows:
+                eid = fr.get("event_id", "")
+                t1 = fr.get("team1", "")
+                t2 = fr.get("team2", "")
+                time_str = fr.get("time", "")
+                league = fr.get("league", "")
+
+                match_date = None
+                if time_str:
+                    try:
+                        from datetime import datetime as dt2
+                        match_date = dt2.fromisoformat(time_str.replace("Z", "+00:00"))
+                    except:
+                        pass
+
+                replay_url = find_replay(t1, t2, replay_list,
+                                         match_date=match_date, league=league)
+                if replay_url:
+                    replay_updates.append({
+                        "event_id": eid,
+                        "replay_url": replay_url,
+                        "updated_at": now,
+                    })
+
+            if replay_updates:
+                print(f"  Знайдено повтори для {len(replay_updates)} матчів", flush=True)
+                sb_upsert("matches", replay_updates)
+            else:
+                print("  Повторів не знайдено", flush=True)
+        else:
+            print("  Список повторів порожній", flush=True)
+    except Exception as e:
+        print(f"  Помилка пошуку повторів: {e}", flush=True)
+
     leagues = sorted(set(m.get("league","") for m in all_matches if m.get("league")))
     _update_global_leagues(leagues)
 
@@ -369,6 +413,62 @@ def run_live():
     print("  Готово!", flush=True)
 
 
+# ─── MODE: REPLAYS ───────────────────────────────────────────────────────────
+def run_replays():
+    """Запускає пошук повторів для завершених матчів."""
+    print(f"[{datetime.utcnow().isoformat()}] Пошук повторів матчів...", flush=True)
+
+    try:
+        replay_list = load_gooool_replays(max_pages=5)
+        if not replay_list:
+            print("  Список повторів порожній", flush=True)
+            sb_set_meta("replays_updated", datetime.utcnow().isoformat())
+            return
+
+        finished_rows = sb_select("matches", "status=eq.finished&select=event_id,team1,team2,time,league,replay_url")
+        print(f"  Завершених матчів: {len(finished_rows)}", flush=True)
+
+        now = datetime.utcnow().isoformat()
+        updates = []
+        for fr in finished_rows:
+            if fr.get("replay_url"):
+                continue  # вже є повтор
+
+            eid = fr.get("event_id", "")
+            t1 = fr.get("team1", "")
+            t2 = fr.get("team2", "")
+            time_str = fr.get("time", "")
+            league = fr.get("league", "")
+
+            match_date = None
+            if time_str:
+                try:
+                    match_date = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+                except:
+                    pass
+
+            replay_url = find_replay(t1, t2, replay_list,
+                                     match_date=match_date, league=league)
+            if replay_url:
+                updates.append({
+                    "event_id": eid,
+                    "replay_url": replay_url,
+                    "updated_at": now,
+                })
+
+        if updates:
+            print(f"  Знайдено повтори для {len(updates)} матчів", flush=True)
+            sb_upsert("matches", updates)
+        else:
+            print("  Нових повторів не знайдено", flush=True)
+
+        sb_set_meta("replays_updated", now)
+    except Exception as e:
+        print(f"  Помилка: {e}", flush=True)
+
+    print("  Готово!", flush=True)
+
+
 # ─── MODE: LEAGUES ────────────────────────────────────────────────────────────
 def run_leagues():
     print(f"[{datetime.utcnow().isoformat()}] Оновлення ліг...", flush=True)
@@ -409,6 +509,8 @@ if __name__ == "__main__":
         run_live()
     elif mode == "leagues":
         run_leagues()
+    elif mode == "replays":
+        run_replays()
     else:
         print(f"Невідомий режим: {mode}")
         sys.exit(1)

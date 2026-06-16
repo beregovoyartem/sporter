@@ -717,3 +717,172 @@ def fetch_score_from_gooool(gurl: str) -> str | None:
     except: pass
     cache_set(ck, {"score": None})
     return None
+
+
+# ─── GOOOOL365 REPLAYS (ПОВТОРИ МАТЧІВ) ──────────────────────────────────
+@st.cache_data(ttl=1800)
+def load_gooool_replays(max_pages: int = 5) -> list[dict]:
+    """
+    Парсить повтори матчів з gooool365.com.
+    Збирає посилання на новини (news/*) з головної сторінки та наступних сторінок.
+    """
+    ck = "gool_replays_v1"
+    cached = cache_get(ck, ttl=900)
+    if cached:
+        return cached
+
+    result = []
+    seen_urls = set()
+
+    for page_num in range(1, max_pages + 1):
+        url = "https://gooool365.com/" if page_num == 1 else f"https://gooool365.com/page/{page_num}/"
+        try:
+            r = requests.get(url, timeout=15,
+                             headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+            r.raise_for_status()
+            soup = BeautifulSoup(r.text, "html.parser")
+
+            for a_tag in soup.find_all("a", href=re.compile(r"^https://gooool365\.com/news/\d+")):
+                href = a_tag["href"]
+                if href in seen_urls:
+                    continue
+
+                title = a_tag.get_text(strip=True)
+                if not title:
+                    continue
+
+                # Фільтр: тільки футбольні новини
+                parent_text = ""
+                parent = a_tag.parent
+                for _ in range(4):
+                    if parent is None:
+                        break
+                    parent_text = parent.get_text(" ", strip=True)
+                    if "Футбол" in parent_text or "футбол" in parent_text.lower():
+                        break
+                    parent = parent.parent
+
+                combined = title + " " + parent_text
+                if any(s in combined.lower() for s in ["формула", "formula", "хоккей", "баскетбол",
+                                                        "теннис", "волейбол", "бокс", "мма",
+                                                        "гонки", "nascar", "мото", "гран-при"]):
+                    continue
+
+                title_clean = title.strip()
+                mp = re.match(
+                    r"^(.+?)\s*[-–—]\s*(.+?)\s*\((\d{2})\.(\d{2})\.(\d{4})\)\s*\|\s*(.+)$",
+                    title_clean
+                )
+                if not mp:
+                    mp = re.match(
+                        r"^(.+?)\s*[-–—]\s*(.+?)\s*\((\d{2})\.(\d{2})\.(\d{4})\)",
+                        title_clean
+                    )
+
+                if mp:
+                    t1 = mp.group(1).strip()
+                    t2 = mp.group(2).strip()
+                    day, month, year = mp.group(3), mp.group(4), mp.group(5)
+                    league_from_title = mp.group(6).strip() if mp.lastindex >= 6 else ""
+                    date_str = f"{day}.{month}.{year}"
+                    try:
+                        date_obj = datetime(int(year), int(month), int(day))
+                    except:
+                        date_obj = None
+                else:
+                    t1 = title_clean.split(" - ")[0].strip() if " - " in title_clean else ""
+                    t2 = title_clean.split(" - ")[1].strip() if " - " in title_clean else ""
+                    date_str = ""
+                    league_from_title = ""
+                    date_obj = None
+
+                seen_urls.add(href)
+                result.append({
+                    "title": title_clean,
+                    "url": href,
+                    "date": date_str,
+                    "league_from_title": league_from_title,
+                    "team1": t1,
+                    "team2": t2,
+                    "date_obj": date_obj,
+                })
+
+        except Exception as e:
+            print(f"  gooool replay page {page_num}: {e}", flush=True)
+            continue
+
+    print(f"  gooool повтори: {len(result)} матчів на {max_pages} сторінках", flush=True)
+    cache_set(ck, result)
+    return result
+
+
+def find_replay(t1: str, t2: str, replay_list: list[dict],
+                match_date=None, league: str = "") -> str | None:
+    """
+    Шукає повтор матчу серед списку повернутих load_gooool_replays().
+    Повертає URL повтору або None.
+    """
+    if not t1 or not t2:
+        return None
+
+    t1_lower = t1.lower().strip()
+    t2_lower = t2.lower().strip()
+
+    TR = {
+        "байер л": "байер",
+        "манчестер сити": "ман сити",
+        "манчестер юнайтед": "ман юнайтед",
+        "пари сен-жермен": "псж",
+        "псж": "пари сен-жермен",
+    }
+
+    def variants(n: str) -> set:
+        n = n.lower().strip()
+        v = {n}
+        for k, val in TR.items():
+            if k in n:
+                v.add(n.replace(k, val))
+            if val in n:
+                v.add(n.replace(val, k))
+        return v
+
+    def sim(a: str, b: str) -> bool:
+        for va in variants(a):
+            for vb in variants(b):
+                if len(va) < 4 or len(vb) < 4:
+                    if va == vb or va in vb or vb in va:
+                        return True
+                else:
+                    if va[:5] in vb or vb[:5] in va:
+                        return True
+        return False
+
+    best_match = None
+    best_score = -1
+
+    for replay in replay_list:
+        rt1 = replay.get("team1", "").lower().strip()
+        rt2 = replay.get("team2", "").lower().strip()
+        if not rt1 or not rt2:
+            continue
+
+        direct = (sim(t1_lower, rt1) and sim(t2_lower, rt2)) or \
+                 (sim(t1_lower, rt2) and sim(t2_lower, rt1))
+
+        if direct:
+            score = 2
+            if match_date and replay.get("date_obj"):
+                try:
+                    if replay["date_obj"].date() == match_date.date():
+                        score += 10
+                except:
+                    pass
+            if league and replay.get("league_from_title"):
+                if league.lower() in replay["league_from_title"].lower():
+                    score += 5
+
+            if score > best_score:
+                best_score = score
+                best_match = replay["url"]
+
+    return best_match
