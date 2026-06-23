@@ -186,10 +186,14 @@ def load_livetv():
     soup = BeautifulSoup(html, "html.parser")
     year = datetime.now().year
 
+    base_scope = soup.find("table", class_="main")
+    if not base_scope:
+        base_scope = soup
+
     top_table = None
     schedule_table = None
 
-    sltitle = soup.find("span", class_="sltitle", string=re.compile(r"^Футбол$"))
+    sltitle = base_scope.find("span", class_="sltitle", string=re.compile(r"^Футбол$"))
     if sltitle:
         container_td = sltitle.find_parent("td", attrs={"valign": "top"})
         if not container_td:
@@ -213,7 +217,7 @@ def load_livetv():
                   f"({len(schedule_table.find_all('td', colspan='2')) if schedule_table else 0} матчів)",
                   flush=True)
 
-    meta_scope = soup
+    meta_scope = base_scope
     if top_table or schedule_table:
         from bs4 import BeautifulSoup as BS4
         combined_html = ""
@@ -225,7 +229,7 @@ def load_livetv():
 
     NON_SPORT_PREFIXES = (
         "хоккей", "баскетбол", "теннис", "волейбол", "бокс",
-        "гонки", "хоккей с мячом", "футзал", "гандбол", "регби-лига",
+        "гонки", "хоккей с мячом", "футзал", "гандбол", "пляжный гандбол", "регби-лига",
         "регби-союз", "регби", "зимний спорт", "бейсбол", "керлинг",
         "пляжный волейбол", "водное поло", "пляжный футбол",
         "американский футбол", "бильярд", "дартс", "бадминтон",
@@ -411,10 +415,10 @@ def load_livetv():
 
     # Топ-матчі
     top_ids: set = set()
-    top_search_scope = top_table if top_table else soup
+    top_search_scope = top_table if top_table else base_scope
     b = top_search_scope.find(string=re.compile(r"Главные матчи", re.I))
     if not b and top_table is None:
-        b = soup.find(string=re.compile(r"Главные матчи", re.I))
+        b = base_scope.find(string=re.compile(r"Главные матчи", re.I))
     if b:
         tbl = b.find_parent("table")
         if tbl:
