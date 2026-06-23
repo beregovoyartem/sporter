@@ -384,6 +384,12 @@ def load_livetv():
         league = meta["league"]
         league_raw = meta["league_raw"]
 
+        if "(ж)" in title.lower() and not league.endswith("(Ж)") and "женщин" not in league.lower():
+            if league == "Чемпионат Мира":
+                league = "Чемпионат Мира (Ж)"
+            else:
+                league = league + " (Ж)"
+
         always = (
             league in PRIORITY_LEAGUES or
             any(k in league_raw.lower() for k in ["евро", "чемпионат мира", "world cup"]) or
